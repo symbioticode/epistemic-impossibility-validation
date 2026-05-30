@@ -1,13 +1,45 @@
-.env
+# Python
 __pycache__/
-*.pyc
-.pytest_cache/
-.ruff_cache/
+*.py[cod]
+*.$py.class
 *.egg-info/
 dist/
 build/
-mdn/*.pdf
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# Nix
+result
+result-*
+
+# ML / Hugging Face (ne jamais commiter de modèles ou datasets)
+*.bin
+*.pt
+*.safetensors
+*.ckpt
+*.pth
+*.onnx
+.cache/
+hf_cache/
+models/
+datasets/
+
+# IDE / OS
 .DS_Store
-Thumbs.db
-scripts/TECH_README-DP.md
-intern/
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log
+*.tmp
+
+# Project-specific
+# Keep .csv, .pdf, .tex, .html in results/ and figures/
+# Ignore large intermediate dumps if any are generated later
+*.dump
+*.parquet
+*.h5
+*.pkl
