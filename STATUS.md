@@ -6,10 +6,11 @@
 **Dernière mise à jour :** 30 mai 2026
 
 ## Sprint courant
-Sprint 1 — [À définir] — EN COURS
+Sprint 2 — [À définir] — PRÊT
 
 ## Sprints complétés
 Sprint 0 — Préparation infrastructure — TERMINÉ
 Sprint 0.5 — Formalisation théorique préalable — TERMINÉ
+Sprint 1 — Instrumentation des canaux — TERMINÉ
 
 ## Prochaine action
