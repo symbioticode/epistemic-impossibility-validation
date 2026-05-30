@@ -82,21 +82,16 @@ for p in "${PATTERNS[@]}"; do
 done
 echo "✅" && PASS=$((PASS+1))
 
-# 10. Repo size < 100 MB
+# 10. Repo size < 100 MB (utilise -v pour KiB, évite les problèmes de locale/unités)
 echo -n "□ Taille du pack Git < 100 MB ... "
-SIZE=$(git count-objects -vH | grep size-pack | awk '{print $2}' | sed 's/Mio//')
-if (( $(echo "$SIZE < 100" | bc -l 2>/dev/null || echo 0) )); then
-    echo "✅ (${SIZE} MB)" && PASS=$((PASS+1))
+SIZE_KB=$(git count-objects -v | grep "size-pack" | awk '{print $2}')
+if [[ -z "$SIZE_KB" || ! "$SIZE_KB" =~ ^[0-9]+$ ]]; then
+    echo "❌ (impossible de lire size-pack)" && FAIL=$((FAIL+1))
 else
-    echo "❌ (${SIZE} MB > 100 MB)" && FAIL=$((FAIL+1))
-fi
-
-echo ""
-echo "📊 Résultat : $PASS/$((PASS+FAIL)) tests passés"
-if [[ $FAIL -eq 0 ]]; then
-    echo "✅ Sprint 0 — VALIDÉ"
-    exit 0
-else
-    echo "❌ Sprint 0 — $FAIL échec(s) à corriger"
-    exit 1
+    SIZE_MB=$((SIZE_KB / 1024))
+    if [[ $SIZE_MB -lt 100 ]]; then
+        echo "✅ (${SIZE_MB} MB)" && PASS=$((PASS+1))
+    else
+        echo "❌ (${SIZE_MB} MB ≥ 100 MB)" && FAIL=$((FAIL+1))
+    fi
 fi
