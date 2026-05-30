@@ -1,12 +1,12 @@
 # STATUS — epistemic-impossibility-validation
 
-**Sprint courant :** 0
+**Sprint courant :** 0.5
 **Statut :** PRÊT
 **Version chantier :** v4 (5 questions, 7 sprints)
-**Dernière mise à jour :** [DATE]
+**Dernière mise à jour :** 30 mai 2026
 
 ## Sprint courant
-Sprint 0 — Préparation infrastructure — EN COURS
+Sprint 0 — Préparation infrastructure — TERMINÉ
 
 ## Sprints complétés
 (aucun)
