@@ -1,17 +1,16 @@
 # STATUS — epistemic-impossibility-validation
 
-**Sprint courant :** 0.5
+**Sprint courant :** 1
 **Statut :** PRÊT
 **Version chantier :** v4 (5 questions, 7 sprints)
 **Dernière mise à jour :** 30 mai 2026
 
 ## Sprint courant
-Sprint 0 — Préparation infrastructure — TERMINÉ
+Sprint 1 — [À définir] — EN COURS
 
 ## Sprints complétés
-(aucun)
+Sprint 0 — Préparation infrastructure — TERMINÉ
+Sprint 0.5 — Formalisation théorique préalable — TERMINÉ
 
 ## Prochaine action
-Valider critère de passage Sprint 0 :
-  git clone + pip install -r requirements.txt fonctionne sans erreur
-  sur machine tierce, et les 10 fichiers BR existent avec statut PROPOSÉ.
+[À définir après lecture de SPRINT-1.context.md]
