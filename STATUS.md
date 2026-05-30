@@ -13,4 +13,3 @@ Sprint 0 — Préparation infrastructure — TERMINÉ
 Sprint 0.5 — Formalisation théorique préalable — TERMINÉ
 
 ## Prochaine action
-[À définir après lecture de SPRINT-1.context.md]
