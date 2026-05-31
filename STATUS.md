@@ -1,7 +1,7 @@
 # STATUS — epistemic-impossibility-validation
 
-**Sprint courant :** 3 (rédaction — préparation) + 2 (piste expérimentale)
-**Statut :** PRÊT
+**Sprint courant :** 4 (rédaction du papier) + 2 (piste expérimentale)
+**Statut :** EN COURS
 **Version chantier :** v4 (5 questions, 7 sprints)
 **Dernière mise à jour :** Mai 2026
 
@@ -9,7 +9,7 @@
 
 **Sprint 7 itération 2 clos (Mai 2026).** Passage en Sprint 3 puis 4 pour la rédaction du papier.
 
-Théorème 7.1 (TIE) **démontré end-to-end** dans `theory/theorem71_formal.md` :
+Théorème 7.1 (TIE) **démontré end-to-end** dans `theory/tie_formal.md` :
 - Étape 0 (Lemme `theory/lemme_auditabilite.md` — Q1+Q2 GO REV-S7)
 - Étapes 1–6 (argument topologique : Sierpiński/Engelking 6.2.8, Munkres 23.5, etc.)
 
@@ -41,13 +41,13 @@ Sprint 2 — [À définir] — PRÊT
 ## Prochaine action
 
 ### Sprint 3 (préparation rédaction)
-1. Définir la structure du papier ICLR (sections, ordre des arguments, figures).
-2. Préparer le squelette `paper/` avec le plan détaillé.
+**TERMINÉ** (Structure définie, squelette initialisé).
 
 ### Sprint 4 (rédaction)
-1. Rédiger le papier en intégrant : Lemme (Stratégie B principale), Théorème 7.1 démontré.
-2. Stratégie A déplacée en annexe.
-3. Relecture humaine / pair académique pour les Étapes 1–6 (vérification cohérence références).
+**TERMINÉ** (Papier v0.3 rédigé, TIE formalisé, renommage effectué).
+
+### Sprint 5 — À venir
+1. Analyse fine des courbes d'apprentissage (Learning Curves).
 
 ### Piste expérimentale (non bloquée)
 1. Définir les protocoles expérimentaux du Sprint 2.

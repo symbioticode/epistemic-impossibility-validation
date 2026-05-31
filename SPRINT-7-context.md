@@ -21,7 +21,7 @@
 ## Fichiers à lire avant de commencer (dans cet ordre)
 
 ```
-1. theory/theorem71_formal.md       ← définitions + énoncé-cible (Sprint 0.5)
+1. theory/tie_formal.md       ← définitions + énoncé-cible (Sprint 0.5)
 2. theory/belnap_tbm_isomorphism.md ← isomorphisme Belnap/TBM (Sprint 0.5)
 3. reviews/REV-S0.5.md              ← rapport Analyste Sprint 0.5
 4. brainstorm/BR-010.md             ← décision de preuve (statut PROPOSÉ)
@@ -35,12 +35,12 @@ ni aucun fichier de session précédent.
 
 ## Ce que tu dois savoir sur ce sprint
 
-Le Théorème 7.1 (énoncé dans `theory/theorem71_formal.md`) affirme qu'un canal
+Le Théorème 7.1 (énoncé dans `theory/tie_formal.md`) affirme qu'un canal
 de communication ne peut pas être simultanément gradient-preserving et auditable.
 
 La preuve de ce théorème comporte une étape qui suppose que l'espace de sortie
 d'un canal auditable est dénombrable. Cette propriété n'est pas dans la définition
-de l'auditabilité telle que tu vas la lire dans `theory/theorem71_formal.md` —
+de l'auditabilité telle que tu vas la lire dans `theory/tie_formal.md` —
 elle doit en être dérivée.
 
 **Ce sprint produit cette dérivation : le Lemme d'auditabilité-discrétion.**
@@ -60,14 +60,14 @@ Avec ce Lemme, elle démontre une contrainte réelle sur l'architecture des cana
 > Soit O_cert = {o ∈ O | M(o) = "valide"} l'ensemble des sorties certifiées.
 >
 > Si C est auditable au sens des conditions (a), (b), (c) définies dans
-> `theory/theorem71_formal.md` (version commité en Sprint 0.5),
+> `theory/tie_formal.md` (version commité en Sprint 0.5),
 >
 > alors O_cert est au plus dénombrable.
 
 ### Instructions
 
 **Étape préalable obligatoire :** lire les conditions (a), (b), (c) dans
-`theory/theorem71_formal.md`. La preuve doit partir uniquement de ces
+`theory/tie_formal.md`. La preuve doit partir uniquement de ces
 conditions telles qu'elles sont formulées dans ce fichier — pas d'une
 reformulation, pas d'une hypothèse supplémentaire non déclarée.
 
@@ -96,7 +96,7 @@ reformulation, pas d'une hypothèse supplémentaire non déclarée.
 [reprendre l'énoncé ci-dessus verbatim]
 
 ## Définitions utilisées
-[lister les conditions (a), (b), (c) avec leur numéro dans theorem71_formal.md]
+[lister les conditions (a), (b), (c) avec leur numéro dans tie_formal.md]
 
 ## Démonstration
 
@@ -132,7 +132,7 @@ Après avoir produit et commité `theory/lemme_auditabilite.md`,
 invoquer une **instance Opus séparée** (extended thinking activé).
 
 **Fournir à l'Analyste uniquement :**
-- `theory/theorem71_formal.md` (commité)
+- `theory/tie_formal.md` (commité)
 - `theory/lemme_auditabilite.md` (commité)
 
 **Ne pas fournir à l'Analyste :** la présente conversation, ce fichier de session,
@@ -142,7 +142,7 @@ ni aucun contexte sur la façon dont la démonstration a été produite.
 
 **Question 1 — Non-circularité**
 > En lisant uniquement la démonstration du Lemme et les définitions de
-> `theory/theorem71_formal.md` : la preuve suppose-t-elle à un moment quelconque
+> `theory/tie_formal.md` : la preuve suppose-t-elle à un moment quelconque
 > une propriété de l'espace de sortie O ou de O_cert qui n'est pas
 > explicitement dérivée des conditions (a), (b), (c) ?
 > Si oui : identifier l'étape et la propriété supposée.
@@ -178,13 +178,13 @@ Commiter le rapport Analyste dans `reviews/REV-S7.md`.
 
 Après un verdict GO de l'Analyste sur les trois questions :
 
-**Fichier à modifier :** `theory/theorem71_formal.md`
+**Fichier à modifier :** `theory/tie_formal.md`
 
 Ajouter le Lemme comme étape explicite dans la preuve du Théorème 7.1.
 Le Lemme doit apparaître comme **Étape 0** ou **Lemme préliminaire**,
 avec un renvoi vers `theory/lemme_auditabilite.md`.
 
-**Contrainte de rédaction :** la version mise à jour de `theorem71_formal.md`
+**Contrainte de rédaction :** la version mise à jour de `tie_formal.md`
 doit être auto-contenue — un lecteur qui lit uniquement ce fichier doit
 pouvoir suivre la preuve complète, avec les renvois explicites vers le Lemme.
 
@@ -192,7 +192,7 @@ pouvoir suivre la preuve complète, avec les renvois explicites vers le Lemme.
 des conditions (a), (b), (c) restent identiques à la version Sprint 0.5.
 Seule la structure de la preuve change pour intégrer l'Étape 0.
 
-**Après modification :** relire `theory/theorem71_formal.md` entier et vérifier :
+**Après modification :** relire `theory/tie_formal.md` entier et vérifier :
 - La preuve est-elle complète de H1/H2/H3 à la conclusion, sans saut ?
 - Chaque étape référence-t-elle son fondement (lemme, définition, théorème externe) ?
 - Les hypothèses non utilisées sont-elles déclarées comme telles ?
@@ -205,7 +205,7 @@ Seule la structure de la preuve change pour intégrer l'Étape 0.
 
 ```
 theory/lemme_auditabilite.md    ← NOUVEAU (démonstration du Lemme)
-theory/theorem71_formal.md      ← MIS À JOUR (Étape 0 intégrée)
+theory/tie_formal.md      ← MIS À JOUR (Étape 0 intégrée)
 reviews/REV-S7.md               ← Rapport Analyste (Q1, Q2, Q3)
 brainstorm/BR-010.md            ← MIS À JOUR (statut ADOPTÉ ou retour)
 ```

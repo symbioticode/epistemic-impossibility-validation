@@ -24,7 +24,7 @@ le Théorème 7.1 — pas sur sa correction.
 La résolution adoptée par le PI (option **ζ + γ**, BR-010 §QO-S7-01) ferme
 le gap au niveau du Théorème 7.1 (pas du Lemme) :
 
-- **γ** : ajout de l'hypothèse « O espace métrique » dans la définition du canal (§1 de `theorem71_formal.md`)
+- **γ** : ajout de l'hypothèse « O espace métrique » dans la définition du canal (§1 de `tie_formal.md`)
 - **ζ** : ajout de l'hypothèse « H4 : C(ℳ) ⊆ O_cert » dans l'énoncé du Théorème 7.1 (§5)
 
 Avec ces ajouts, la chaîne de preuve du Théorème 7.1 utilise le Lemme comme
@@ -33,7 +33,7 @@ Avec ces ajouts, la chaîne de preuve du Théorème 7.1 utilise le Lemme comme
 totalement discontinu ; image continue d'un connexe est connexe ; connexe
 ∩ totalement discontinu = singleton).
 
-**Voir :** `theory/theorem71_formal.md` §5–§6 pour le Théorème complet et sa démonstration.
+**Voir :** `theory/tie_formal.md` §5–§6 pour le Théorème complet et sa démonstration.
 
 **Statut du Lemme :** DÉMONTRÉ et INTÉGRÉ dans la preuve du TIE (Étape 0).
 La preuve ci-dessous reste **inchangée** par rapport à l'itération 1 (Q1+Q2 GO acquis).
@@ -56,7 +56,7 @@ Cf. `brainstorm/BR-010.md` §Décision PI.
 > Soit O_cert = {o ∈ O | M(o) = "valide"} l'ensemble des sorties certifiées.
 >
 > Si C est auditable au sens des conditions (a), (b), (c) définies dans
-> `theory/theorem71_formal.md` (version commité en Sprint 0.5),
+> `theory/tie_formal.md` (version commité en Sprint 0.5),
 >
 > alors O_cert est au plus dénombrable.
 
@@ -64,7 +64,7 @@ Cf. `brainstorm/BR-010.md` §Décision PI.
 
 ## Définitions utilisées
 
-Les trois conditions de l'auditabilité, telles que formulées verbatim dans `theory/theorem71_formal.md` §3 :
+Les trois conditions de l'auditabilité, telles que formulées verbatim dans `theory/tie_formal.md` §3 :
 
 **(a) Décidabilité** : Il existe une procédure effective φ telle que pour toute sortie o ∈ O, φ(o) retourne une valeur booléenne en temps fini.
 
