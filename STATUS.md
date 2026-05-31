@@ -1,7 +1,7 @@
 # STATUS — epistemic-impossibility-validation
 
-**Sprint courant :** 7 (lemme de non-circularité)
-**Statut :** PRÊT
+**Sprint courant :** 6 (architecture hybride)
+**Statut :** TERMINÉ
 **Version chantier :** v4
 **Dernière mise à jour :** Mai 2026
 
@@ -15,10 +15,11 @@
 - Sprint 5 — Corollaires benchmarks et RLHF (Figures 2 & 3) — TERMINÉ
 - Sprint 7 — Lemme + intégration TIE — TERMINÉ
 
-## Résultats Sprint 3
-- **Figure 1** : Produite. Canal A stablement bas (~10^-3). QO-S3-01 loggué (pas de décroissance visible quand entropie → 0).
-- **Tables 1-3** : Produites.
-- **Calibration** : Corrélation 0.28 (QO-S1-01).
+## Résultats Sprint 6
+- **Corollaire 3 (Figure 4)** : VALIDÉ. L'architecture hybride domine strictement text_only sur l'axe gradient et latent_only sur l'axe auditabilité.
+- **Rule O3 (Table 4)** : VALIDÉE. Corrélation significative du conflit m(∅) entre émetteur et récepteur.
+- **REV-S6** : Rapport Analyste complété.
+- **BR-009** : Gap minimum ADOPTÉ.
 
 ## Résultats Sprint 5
 - **Corollaire 1 (Figure 2)** : VALIDÉ. Le canal texte plafonne avant round 10.
@@ -26,5 +27,4 @@
 - **REV-S5** : Rapport Analyste complété.
 
 ## Prochaine action
-**Sprint 7 : Lemme de non-circularité.** (Note : Sprint 6 Architecture hybride mis en attente).
-Finaliser la preuve formelle et l'intégrer au papier.
+**EN ATTENTE INTÉGRATION.**
