@@ -10,7 +10,7 @@
 - Sprint 0.5 — Formalisation théorique préalable — TERMINÉ
 - Sprint 1 — Instrumentation des canaux — TERMINÉ
 - Sprint 2 — Baseline Gradient vs Entropy (Figure 1) — TERMINÉ
-- Sprint 3 — Préparation rédaction — TERMINÉ
+- Sprint 3 — Figures et tables — TERMINÉ
 - Sprint 4 — Rédaction papier v0.3 — TERMINÉ
 - Sprint 5 — Corollaires benchmarks et RLHF (Figures 2 & 3) — TERMINÉ
 - Sprint 7 — Lemme + intégration TIE — TERMINÉ
