@@ -1,17 +1,20 @@
 # STATUS — epistemic-impossibility-validation
 
-**Sprint courant :** 7 (piste théorique parallèle) + 2 (piste expérimentale)
-**Statut :** RETOUR Tâche 7.1 — gap topologique tracé en QO-S7-01
+**Sprint courant :** 7 (piste théorique) + 2 (piste expérimentale)
+**Statut piste théorique :** Itération 2 livrée — Théorème 7.1 démontré (ζ+γ adopté). En attente re-vérification Analyste (R-PREUVE-01).
 **Version chantier :** v4 (5 questions, 7 sprints)
 **Dernière mise à jour :** Mai 2026
 
 ## Sprint courant
 
 ### Piste théorique
-Sprint 7 — Lemme de non-circularité — **RETOUR Tâche 7.1**
-- Tâche 7.1 (itération 1) : démontrée — Stratégies A et B produites
-- Tâche 7.2 (REV-S7) : Q1 GO, Q2 GO, **Q3 NO-GO** (gap topologique)
-- Bloqueur : QO-S7-01 (BR-010) — décision PI attendue sur option de renforcement
+Sprint 7 — Lemme de non-circularité + intégration TIE — **ITÉRATION 2 LIVRÉE**
+- Tâche 7.1 (itération 1) : démontrée — Stratégies A et B (Q1 GO, Q2 GO)
+- Tâche 7.2 (REV-S7) : Q3 NO-GO → RETOUR
+- **QO-S7-01 (BR-010) : RÉSOLU — option ζ+γ adoptée par le PI**
+- Tâche 7.1 (itération 2) : `theorem71_formal.md` §1 enrichi (O métrique), §5 remplacé par Théorème + démonstration complète (6 étapes)
+- Tâche 7.3 : Lemme intégré comme Étape 0 du Théorème — fait
+- **En attente :** Tâche 7.2 itération 2 (re-vérification Analyste sur la chaîne complète Étapes 0–6) — décision PI
 
 ### Piste expérimentale
 Sprint 2 — [À définir] — PRÊT
@@ -23,11 +26,11 @@ Sprint 1 — Instrumentation des canaux — TERMINÉ (Validé par l'Analyste)
 
 ## Prochaine action
 
-### Piste théorique (bloquante pour Sprint 4 — R-SEQ-01)
-1. PI tranche QO-S7-01 dans BR-010 (option de renforcement : ζ+γ, β+γ, autre).
-2. Itération 2 Tâche 7.1 : ré-écriture du Lemme renforcé + mise à jour theorem71_formal.md.
-3. Itération 2 Tâche 7.2 : Analyste réévalue Q3.
+### Piste théorique
+1. **Décision PI :** re-soumettre `theorem71_formal.md` mis à jour à l'Analyste (Tâche 7.2 itération 2) ou considérer la preuve close (théorèmes externes invoqués sont standards et bien référencés) ?
+2. Si re-soumission : Analyste vérifie les Étapes 1–6 (Q3 spécifiquement).
+3. Si close : passage au Sprint 4 (rédaction du papier) — R-SEQ-01 satisfait.
 
-### Piste expérimentale (non bloquée)
+### Piste expérimentale (non bloquée par le théorique)
 1. Définir les protocoles expérimentaux du Sprint 2.
 2. Lancer la Figure 1 (Baseline Gradient vs Entropy).

@@ -6,32 +6,37 @@
 
 ---
 
-## ⚠️ Verdict Analyste (REV-S7, Mai 2026)
+## ✅ Verdict Analyste (REV-S7, Mai 2026) + Résolution (Sprint 7 itération 2)
 
-| Question | Verdict |
-|---|---|
-| Q1 — Non-circularité | **GO** — aucune hypothèse cachée détectée |
-| Q2 — Nécessité de (a)(b)(c) | **GO** — toutes utilisées, aucune superflue |
-| Q3 — Suffisance pour Théorème 7.1 | **NO-GO** — gap topologique |
+| Question | Verdict initial | Statut après résolution |
+|---|---|---|
+| Q1 — Non-circularité | **GO** | Inchangé — acquis |
+| Q2 — Nécessité de (a)(b)(c) | **GO** | Inchangé — acquis |
+| Q3 — Suffisance pour Théorème 7.1 | NO-GO (gap topologique) | **Gap fermé au niveau du Théorème via ζ+γ** (BR-010 QO-S7-01 RÉSOLU) |
 
-**La preuve ci-dessous est correcte** (Q1 GO, Q2 GO) — elle établit
-proprement que O_cert est au plus dénombrable à partir de (a), (b), (c).
+**Position du Lemme dans la chaîne de preuve :**
 
-**Mais elle est insuffisante** pour la chaîne de preuve du Théorème 7.1.
-Deux gaps identifiés par l'Analyste :
+Le Lemme reste **inchangé** : il établit la dénombrabilité de O_cert à partir
+de (a)(b)(c). C'est sa portée exacte, ni plus ni moins. Le gap Q3 identifié
+par l'Analyste portait sur la **suffisance** du Lemme seul pour conclure
+le Théorème 7.1 — pas sur sa correction.
 
-- **G1.** (a)(b)(c) n'imposent pas C(ℳ) ⊆ O_cert.
-- **G2.** La dénombrabilité ensembliste ne contraint pas la topologie héritée
-  de O_cert. Un ensemble dénombrable peut être muni d'une topologie non-discrète
-  (contre-exemple : ℚ ⊂ ℝ).
+La résolution adoptée par le PI (option **ζ + γ**, BR-010 §QO-S7-01) ferme
+le gap au niveau du Théorème 7.1 (pas du Lemme) :
 
-**Décision Sprint 7 :** RETOUR Tâche 7.1, itération 2. Le renforcement requis
-(C(ℳ) ⊆ O_cert et/ou topologie sur O) est tracé dans `brainstorm/BR-010.md` §QO-S7-01.
-Décision PI attendue avant ré-écriture (R-DEC-01).
+- **γ** : ajout de l'hypothèse « O espace métrique » dans la définition du canal (§1 de `theorem71_formal.md`)
+- **ζ** : ajout de l'hypothèse « H4 : C(ℳ) ⊆ O_cert » dans l'énoncé du Théorème 7.1 (§5)
 
-**La preuve ci-dessous reste valide** comme **première étape** du Lemme renforcé.
-Ne pas la re-démontrer. Elle sera complétée par une étape topologique
-supplémentaire selon l'option choisie par le PI.
+Avec ces ajouts, la chaîne de preuve du Théorème 7.1 utilise le Lemme comme
+**Étape 0**, puis poursuit par un argument topologique standard
+(Sierpiński/Engelking 6.2.8 : métrique dénombrable ⇒ zéro-dimensionnel ⇒
+totalement discontinu ; image continue d'un connexe est connexe ; connexe
+∩ totalement discontinu = singleton).
+
+**Voir :** `theory/theorem71_formal.md` §5–§6 pour le Théorème complet et sa démonstration.
+
+**Statut du Lemme :** DÉMONTRÉ et INTÉGRÉ dans la preuve du TIE (Étape 0).
+La preuve ci-dessous reste **inchangée** par rapport à l'itération 1 (Q1+Q2 GO acquis).
 
 ---
 
