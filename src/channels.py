@@ -7,8 +7,7 @@ from dataclasses import dataclass
 from typing import Literal, Dict, FrozenSet
 
 
-N_ROUNDS_COROL = 50  # Default number of rounds for corollary experiments
-
+N_RUNS = 10  # Default number of runs for corollary experiments
 
 def _spectral_norm_power(fn, h: torch.Tensor, n_vecs: int = 5) -> float:
     """

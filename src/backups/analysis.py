@@ -74,6 +74,7 @@ def run_statistical_tests(df: pd.DataFrame) -> pd.DataFrame:
                 continue
             stat, pval = stats.mannwhitneyu(a_vals, b_vals, alternative="two-sided")
             n1, n2 = len(a_vals), len(b_vals)
+            # Rank-biserial correlation r = 1 - (2U / (n1*n2))
             r = 1 - (2 * stat / (n1 * n2))
             rows.append({
                 "comparison": f"text_vs_{canal_b}",
@@ -127,6 +128,7 @@ def plot_figure1(
             elinewidth=1,
             markeredgewidth=1
         )
+        # Fill IQR area
         plt.fill_between(
             sub["entropy_level"],
             sub["median"] - sub["iqr"] / 2,
@@ -178,8 +180,8 @@ def generate_table1(
         lines.append(row_str)
 
     lines.append("")
-    lines.append("*N = 50 runs par cellule. IQR = Q3 − Q1.*")
-    lines.append("*Valeurs issues de results/raw_results.csv.*")
+    lines.append(f"*N = 50 runs par cellule. IQR = Q3 − Q1.*")
+    lines.append(f"*Valeurs issues de results/raw_results.csv.*")
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines))
@@ -303,7 +305,7 @@ def test_corollary_1(df_learning: pd.DataFrame) -> dict:
         "plateau_round_B": plateau_b,
         "corollary_1_confirmed": bool(confirmed)
     }
-# TODO: Implémenter plot_learning_curves() pour générer Figure 2 (learning curves)
+
 
 def test_corollary_2(df_rlhf: pd.DataFrame) -> dict:
     """
