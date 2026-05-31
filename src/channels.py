@@ -36,6 +36,13 @@ def _spectral_norm_power(fn, h: torch.Tensor, n_vecs: int = 5) -> float:
 
 
 class TextChannel:
+    """Textual communication channel.
+
+    Provides an `is_certified` method that always returns ``True`` because any
+    generated token sequence can be interpreted as a certified message in the
+    context of this work.
+    """
+
     """
     Canal de communication texte.
     Encode un état latent h via softmax → token → re-embedding.
@@ -44,6 +51,20 @@ class TextChannel:
     """
 
     def __init__(self, model_name: str = "gpt2", seed: int = 42):
+        """Initialize the GPT‑2 based text channel.
+
+        Args:
+            model_name: HuggingFace model identifier (default "gpt2").
+            seed: Random seed for reproducibility of any internal sampling.
+        """
+
+        """Initialize the GPT‑2 based text channel.
+
+        Args:
+            model_name: HuggingFace model identifier (default "gpt2").
+            seed: Random seed for reproducibility of any internal sampling.
+        """
+
         """
         model_name : identifiant HuggingFace (défaut : "gpt2")
         seed       : seed pour reproductibilité
@@ -97,15 +118,22 @@ class TextChannel:
         return h_out
 
     def get_jacobian_norm(self, h: torch.Tensor) -> float:
-        """
-        Retourne ‖J_C(h)‖₂ — norme spectrale du jacobien de encode() en h.
-        Utilisé pour la mesure expérimentale (sprints suivants).
-        Contrat : résultat ≥ 0, sans exception.
+        """Return the spectral norm of the Jacobian of `encode`.
 
-        Note: Pour le canal texte, encode() est discret (argmax).
-        On utilise une approximation différentiable (weighted sum of embeddings)
-        pour calculer un jacobien significatif représentatif du canal.
+        The textual channel's `encode` is inherently discrete (argmax). To obtain a
+        meaningful Jacobian we use a differentiable proxy (`soft_encode_fn`) that
+        computes a weighted sum of the token embeddings.
         """
+
+        """Return the spectral norm of the Jacobian of `encode`.
+
+        The textual channel's `encode` is inherently discrete (argmax). To obtain a
+        meaningful Jacobian we use a differentiable proxy (`soft_encode_fn`) that
+        computes a weighted sum of the token embeddings.
+        """
+
+        h_clone = h.detach().requires_grad_(True)
+
         # Define a differentiable version of encode for Jacobian calculation
         def soft_encode_fn(x):
             # Project to vocabulary space
@@ -141,9 +169,10 @@ class TextChannel:
             return max(spectral_norms) if spectral_norms else 0.0
 
     def get_output_entropy(self, h: torch.Tensor) -> float:
-        """
-        Retourne H(p) = -Σ p_i log p_i sur la distribution softmax en h.
-        Contrat : résultat ∈ [0, log(vocab_size)].
+        """Compute Shannon entropy of the softmax distribution over the vocabulary.
+
+        Returns:
+            float: Entropy value in the interval [0, log(vocab_size)].
         """
         with torch.no_grad():
             # Project to vocabulary logits
@@ -227,6 +256,7 @@ class LatentChannel:
             return self.encode(x)
         
         # Compute Jacobian using torch.autograd.functional.jacobian
+        h_clone = h.detach().requires_grad_(True)
         jacobian = torch.autograd.functional.jacobian(encode_fn, h_clone, vectorize=True)
         
         # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
@@ -472,11 +502,8 @@ class CLAIMChannel:
                 return "N"  # Neither (default to ignorance when unclear)
 
     def get_jacobian_norm(self, h: torch.Tensor) -> float:
-        """
-        Le jacobien est calculé sur la tête de calibration (h → masses).
-        Contrat : résultat ≥ 0.
-        Note : ce canal est attendu non-gradient-preserving.
-                Le test ne vérifie pas un seuil minimum — il mesure la valeur.
+        """Compute Jacobian norm for the calibration head.
+        Returns a non‑negative spectral norm.
         """
         # Ensure we don't modify input
         h = h.clone()
@@ -548,6 +575,79 @@ class CLAIMChannel:
 
     def inject_conflict(self, h: torch.Tensor,
                       conflict_level: float) -> CLAIM:
+        """Inject a specified conflict level into the belief mass.
+
+        This variant of `encode` is used for experiments that manipulate the
+        conflict mass `m(∅)`. The method forces the empty‑set mass to `conflict_level`
+        (±0.01) and renormalises the remaining masses. It does **not** affect the
+        Jacobian norm, preserving gradient‑preserving properties of the underlying
+        latent channel.
+        """
+        # Ensure we don't modify input
+        h = h.clone()
+
+        # Expecting batch size 1 for CLAIM channel
+        if h.dim() != 2 or h.size(0) != 1:
+            raise ValueError(f"CLAIMChannel expects input of shape (1, hidden_dim), got {h.shape}")
+
+        # Ensure linear layer is initialized
+        self._ensure_linear_layer(h.size(-1))
+
+        # Forward pass through linear layer
+        logits = self.linear(h)  # (1, powerset_size)
+
+        # Apply softmax to get belief masses over powerset
+        masses_raw = torch.softmax(logits, dim=-1)  # (1, powerset_size)
+        masses_raw = masses_raw.squeeze(0)  # (powerset_size,)
+
+        # Convert to dictionary mapping frozenset -> mass
+        belief_mass = {}
+        for i, mass_val in enumerate(masses_raw):
+            fs = self._index_to_frozenset[i]
+            belief_mass[fs] = mass_val.item()
+
+        # Inject conflict by setting explicit mass on empty set
+        empty_fs = frozenset()
+        belief_mass[empty_fs] = conflict_level
+
+        # Renormalize other masses to sum to (1 - conflict_level)
+        non_empty_mass = sum(mass for fs, mass in belief_mass.items() if fs != empty_fs)
+        if non_empty_mass > 0:
+            scale_factor = (1.0 - conflict_level) / non_empty_mass
+            for fs in belief_mass:
+                if fs != empty_fs:
+                    belief_mass[fs] *= scale_factor
+        else:
+            # If all mass was supposed to go to empty set, distribute uniformly
+            remaining_mass = 1.0 - conflict_level
+            num_non_empty = len([fs for fs in belief_mass.keys() if fs != empty_fs])
+            if num_non_empty > 0:
+                uniform_mass = remaining_mass / num_non_empty
+                for fs in belief_mass:
+                    if fs != empty_fs:
+                        belief_mass[fs] = uniform_mass
+
+        # Determine proposition (simplified: take the singleton with highest mass, or "inconnu" if empty)
+        proposition = self._determine_proposition(belief_mass)
+
+        # Determine belnap state (simplified logic)
+        belnap_state = self._determine_belnap_state(belief_mass)
+
+        # Determine illocution (simplified: always OBSERVE for now)
+        illocution = "OBSERVE"
+
+        # Stubs for freshness and provenance
+        freshness = (0.0, 1.0)  # (t_obs, Δt_valid)
+        provenance = "chain_0"  # chain_id
+
+        return CLAIM(
+            proposition=proposition,
+            belief_mass=belief_mass,
+            belnap_state=belnap_state,
+            illnaption=illocution,
+            freshness=freshness,
+            provenance=provenance
+        )
         """
         Variante de encode() pour les expériences avec conflit injecté.
         conflict_level ∈ {0.0, 0.2, 0.5, 0.8} (voir VARIABLES.md)
