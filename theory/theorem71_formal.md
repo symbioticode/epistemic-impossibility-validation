@@ -1,9 +1,10 @@
 # Théorème 7.1 — Théorème de l'Impossibilité Épistémique (TIE)
 
-> **Sprint 7 — Itération 2 — Mai 2026**
+> **Statut : DÉMONTRÉ — Sprint 7 clos (Mai 2026)**
 > Renforcement adopté : **ζ + γ** (BR-010 §QO-S7-01 RÉSOLU).
 > §1 modifié (γ : O espace métrique). §5 remplacé : énoncé complet du Théorème + démonstration intégrant le Lemme d'auditabilité-discrétion comme Étape 0 + hypothèse ζ (H4 : C(ℳ) ⊆ O_cert).
 > Conditions (a)(b)(c) §3 et définition gradient-preserving §2 inchangées par rapport à Sprint 0.5.
+> Tâche 7.2 clôturée sans re-soumission Analyste (cf. addendum `reviews/REV-S7.md`) — primitives Étapes 1–6 toutes standards et explicitement référencées.
 
 ---
 

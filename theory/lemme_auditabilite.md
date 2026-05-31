@@ -38,6 +38,12 @@ totalement discontinu ; image continue d'un connexe est connexe ; connexe
 **Statut du Lemme :** DÉMONTRÉ et INTÉGRÉ dans la preuve du TIE (Étape 0).
 La preuve ci-dessous reste **inchangée** par rapport à l'itération 1 (Q1+Q2 GO acquis).
 
+**Décision PI sur A vs B (Mai 2026, clôture Sprint 7) :**
+**Stratégie B (Représentation directe) adoptée comme preuve principale.**
+Justification : accessibilité ICLR (théorie des ensembles élémentaire vs récursive énumérabilité).
+Stratégie A conservée ci-dessous comme alternative annexe pour les aspects calculabilité.
+Cf. `brainstorm/BR-010.md` §Décision PI.
+
 ---
 
 ---
