@@ -21,7 +21,7 @@ Théorème 7.1 (TIE) **démontré end-to-end** dans `theory/theorem71_formal.md`
 **CLOS.** Plus de tâche bloquante en théorique.
 
 ### Piste rédaction
-Sprint 3 (préparation rédaction) — PRÊT
+Sprint 3 (préparation rédaction) — EN COURS
 
 ### Piste expérimentale
 Sprint 2 — [À définir] — PRÊT
