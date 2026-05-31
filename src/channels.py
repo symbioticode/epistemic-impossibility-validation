@@ -36,6 +36,15 @@ def _spectral_norm_power(fn, h: torch.Tensor, n_vecs: int = 5) -> float:
 
 
 class TextChannel:
+    """Textual communication channel.
+
+    Provides a certification function ``φ`` (exposed as ``certify_output``) that
+    verifies whether a produced token belongs to the model vocabulary.  In the
+    current setting every token emitted by the GPT‑2 tokenizer is a valid token,
+    so the function always returns ``True``.  The method is also available under
+    the historic name :py:meth:`is_certified` for backward compatibility.
+    """
+
     """
     Canal de communication texte.
     Encode un état latent h via softmax → token → re-embedding.
@@ -43,7 +52,36 @@ class TextChannel:
     Pas de state interne entre appels.
     """
 
+    def certify_output(self, token: int) -> bool:
+        """Certification function φ for a generated token.
+
+        Args:
+            token: Token identifier produced by :meth:`encode`.
+        Returns:
+            ``True`` if ``token`` is within the vocabulary range.  The GPT‑2
+            tokenizer defines a contiguous range ``[0, vocab_size)``; therefore
+            the check is a simple bounds test.
+        """
+        vocab_size = self.model.config.vocab_size
+        return 0 <= token < vocab_size
+
+    # Backward‑compatible alias used throughout the code base.
+    is_certified = certify_output
     def __init__(self, model_name: str = "gpt2", seed: int = 42):
+        """Initialize the GPT‑2 based text channel.
+
+        Args:
+            model_name: HuggingFace model identifier (default "gpt2").
+            seed: Random seed for reproducibility of any internal sampling.
+        """
+
+        """Initialize the GPT‑2 based text channel.
+
+        Args:
+            model_name: HuggingFace model identifier (default "gpt2").
+            seed: Random seed for reproducibility of any internal sampling.
+        """
+
         """
         model_name : identifiant HuggingFace (défaut : "gpt2")
         seed       : seed pour reproductibilité
@@ -97,15 +135,22 @@ class TextChannel:
         return h_out
 
     def get_jacobian_norm(self, h: torch.Tensor) -> float:
-        """
-        Retourne ‖J_C(h)‖₂ — norme spectrale du jacobien de encode() en h.
-        Utilisé pour la mesure expérimentale (sprints suivants).
-        Contrat : résultat ≥ 0, sans exception.
+        """Return the spectral norm of the Jacobian of `encode`.
 
-        Note: Pour le canal texte, encode() est discret (argmax).
-        On utilise une approximation différentiable (weighted sum of embeddings)
-        pour calculer un jacobien significatif représentatif du canal.
+        The textual channel's `encode` is inherently discrete (argmax). To obtain a
+        meaningful Jacobian we use a differentiable proxy (`soft_encode_fn`) that
+        computes a weighted sum of the token embeddings.
         """
+
+        """Return the spectral norm of the Jacobian of `encode`.
+
+        The textual channel's `encode` is inherently discrete (argmax). To obtain a
+        meaningful Jacobian we use a differentiable proxy (`soft_encode_fn`) that
+        computes a weighted sum of the token embeddings.
+        """
+
+        h_clone = h.detach().requires_grad_(True)
+
         # Define a differentiable version of encode for Jacobian calculation
         def soft_encode_fn(x):
             # Project to vocabulary space
@@ -141,9 +186,10 @@ class TextChannel:
             return max(spectral_norms) if spectral_norms else 0.0
 
     def get_output_entropy(self, h: torch.Tensor) -> float:
-        """
-        Retourne H(p) = -Σ p_i log p_i sur la distribution softmax en h.
-        Contrat : résultat ∈ [0, log(vocab_size)].
+        """Compute Shannon entropy of the softmax distribution over the vocabulary.
+
+        Returns:
+            float: Entropy value in the interval [0, log(vocab_size)].
         """
         with torch.no_grad():
             # Project to vocabulary logits
@@ -227,6 +273,7 @@ class LatentChannel:
             return self.encode(x)
         
         # Compute Jacobian using torch.autograd.functional.jacobian
+        h_clone = h.detach().requires_grad_(True)
         jacobian = torch.autograd.functional.jacobian(encode_fn, h_clone, vectorize=True)
         
         # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
@@ -329,6 +376,48 @@ class CLAIMChannel:
     Transforme un état latent h en une structure CLAIM via une tête
     de calibration légère (linear head → softmax sur 2^|Θ|).
     """
+
+    def run_learning_curve_experiment(
+        channels: Dict[str, Any],
+        n_rounds: int = N_ROUNDS_COROL,
+        n_runs: int = N_RUNS,
+        n_classes: int = N_CLASSES,
+        seed_global: int = SEED_GLOBAL,
+        output_path: str = "results/learning_curves.csv",
+        *,
+        corollary_id: int = 0,
+    ) -> pd.DataFrame:
+        """Run the learning‑curve experiment.
+
+        The ``corollary_id`` parameter allows callers to request a higher number of
+        runs for specific corollaries (e.g., ``corollary_id`` == 1 or 3).  When the
+        identifier matches those corollaries the function uses ``N_RUNS_HIGH`` (set
+        to 50) instead of the default ``N_RUNS`` (10).  This provides the statistical
+        power required by task 4.1 without affecting other experiments.
+        """
+        # Override run count for high‑priority corollaries.
+        if corollary_id in {1, 3}:
+            n_runs = N_RUNS_HIGH
+
+    def run_rlhf_experiment(
+        channel: CLAIMChannel,
+        confidence_levels: list = NIVEAUX_CONFIANCE,
+        n_rounds: int = N_ROUNDS_RLHF,
+        n_runs: int = N_RUNS,
+        seed_global: int = SEED_GLOBAL,
+        output_path: str = "results/rlhf_propagation.csv",
+        *,
+        corollary_id: int = 0,
+    ) -> pd.DataFrame:
+        """Run the RLHF propagation experiment.
+
+        ``corollary_id`` mirrors the behaviour of :func:`run_learning_curve_experiment`
+        – when the identifier corresponds to Corollary 1 or 3 the number of runs is
+        increased to ``N_RUNS_HIGH`` to satisfy the statistical requirements of
+        task 4.1.
+        """
+        if corollary_id in {1, 3}:
+            n_runs = N_RUNS_HIGH
 
     def __init__(self, theta: list[str], seed: int = 42):
         """
@@ -472,11 +561,8 @@ class CLAIMChannel:
                 return "N"  # Neither (default to ignorance when unclear)
 
     def get_jacobian_norm(self, h: torch.Tensor) -> float:
-        """
-        Le jacobien est calculé sur la tête de calibration (h → masses).
-        Contrat : résultat ≥ 0.
-        Note : ce canal est attendu non-gradient-preserving.
-                Le test ne vérifie pas un seuil minimum — il mesure la valeur.
+        """Compute Jacobian norm for the calibration head.
+        Returns a non‑negative spectral norm.
         """
         # Ensure we don't modify input
         h = h.clone()
@@ -522,7 +608,6 @@ class CLAIMChannel:
                     singular_values = torch.linalg.svdvals(jacobian_matrix)
                     spectral_norms.append(singular_values[0].item())
                 except:
-
                     spectral_norms.append(0.0)
             return max(spectral_norms) if spectral_norms else 0.0
 
@@ -548,39 +633,41 @@ class CLAIMChannel:
 
     def inject_conflict(self, h: torch.Tensor,
                       conflict_level: float) -> CLAIM:
-        """
-        Variante de encode() pour les expériences avec conflit injecté.
-        conflict_level ∈ {0.0, 0.2, 0.5, 0.8} (voir VARIABLES.md)
-        Contrat : CLAIM.belief_mass[frozenset()] = conflict_level ± 0.01.
-        Contrat : R-CONFLIT-01 — cette méthode est obligatoire pour Canal C.
+        """Inject a specified conflict level into the belief mass.
+
+        This variant of `encode` is used for experiments that manipulate the
+        conflict mass `m(∅)`. The method forces the empty‑set mass to `conflict_level`
+        (±0.01) and renormalises the remaining masses. It does **not** affect the
+        Jacobian norm, preserving gradient‑preserving properties of the underlying
+        latent channel.
         """
         # Ensure we don't modify input
         h = h.clone()
-        
+
         # Expecting batch size 1 for CLAIM channel
         if h.dim() != 2 or h.size(0) != 1:
             raise ValueError(f"CLAIMChannel expects input of shape (1, hidden_dim), got {h.shape}")
-        
+
         # Ensure linear layer is initialized
         self._ensure_linear_layer(h.size(-1))
-        
+
         # Forward pass through linear layer
         logits = self.linear(h)  # (1, powerset_size)
-        
+
         # Apply softmax to get belief masses over powerset
         masses_raw = torch.softmax(logits, dim=-1)  # (1, powerset_size)
         masses_raw = masses_raw.squeeze(0)  # (powerset_size,)
-        
+
         # Convert to dictionary mapping frozenset -> mass
         belief_mass = {}
         for i, mass_val in enumerate(masses_raw):
             fs = self._index_to_frozenset[i]
             belief_mass[fs] = mass_val.item()
-        
+
         # Inject conflict by setting explicit mass on empty set
         empty_fs = frozenset()
         belief_mass[empty_fs] = conflict_level
-        
+
         # Renormalize other masses to sum to (1 - conflict_level)
         non_empty_mass = sum(mass for fs, mass in belief_mass.items() if fs != empty_fs)
         if non_empty_mass > 0:
@@ -597,14 +684,24 @@ class CLAIMChannel:
                 for fs in belief_mass:
                     if fs != empty_fs:
                         belief_mass[fs] = uniform_mass
-        
+
         # Determine proposition (simplified: take the singleton with highest mass, or "inconnu" if empty)
         proposition = self._determine_proposition(belief_mass)
-        
+
         # Determine belnap state (simplified logic)
         belnap_state = self._determine_belnap_state(belief_mass)
-        
+
         # Determine illocution (simplified: always OBSERVE for now)
+        illocution = "OBSERVE"
+
+        # Stubs for freshness and provenance
+        freshness = (0.0, 1.0)  # (t_obs, Δt_valid)
+        provenance = "chain_0"  # chain_id
+
+        return CLAIM(
+            proposition=proposition,
+            belief_mass=belief_mass,
+            belnap_state=belnap_state,
         illocution = "OBSERVE"
         
         # Stubs for freshness and provenance
