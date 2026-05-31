@@ -4,7 +4,7 @@
 **Instance :** Opus 4.7 + extended thinking
 
 > **Règle de session :** ce fichier est le seul contexte de cette session.
-> Commence par lire STATUS.md et theory/theorem71_formal.md (squelettes) dans le repo.
+> Commence par lire STATUS.md et theory/tie_formal.md (squelettes) dans le repo.
 > La source de vérité est le repo — pas cette conversation.
 > Ne pas injecter la méthodologie complète, les sprints expérimentaux, ni Sprint 7.
 
@@ -40,7 +40,7 @@ par une instance qui ne verra que les définitions et l'énoncé à démontrer.
 
 ## Tâche 1 — Définitions formelles (1 jour)
 
-Rédiger `theory/theorem71_formal.md` — version provisoire.
+Rédiger `theory/tie_formal.md` — version provisoire.
 
 ### Ce fichier doit contenir exactement :
 
@@ -136,12 +136,12 @@ existe une bijection préservant la structure algébrique entre :
 
 ## Tâche 3 — Vérification de cohérence par l'Analyste (0.5 jour)
 
-Après avoir produit `theory/theorem71_formal.md` et l'avoir commité,
+Après avoir produit `theory/tie_formal.md` et l'avoir commité,
 invoquer une **instance Opus séparée** (extended thinking activé) sans
 lui donner accès à la conversation de travail.
 
 Soumettre uniquement :
-- Le fichier `theory/theorem71_formal.md` commité
+- Le fichier `theory/tie_formal.md` commité
 - Les deux questions suivantes, exactement telles qu'elles sont formulées :
 
 **Question 1 :**
@@ -209,7 +209,7 @@ Invoquer le **LLM Council** (5 sub-agents Claude Sonnet) sur la question suivant
 > ou mal positionnée qui affaiblirait la contribution aux yeux d'un reviewer ? »
 
 **Contexte à fournir au Council :**
-- Le fichier `theory/theorem71_formal.md` (définitions + énoncé visé)
+- Le fichier `theory/tie_formal.md` (définitions + énoncé visé)
 - Le fichier `theory/corollary_framework.md` (corollaires)
 - Cette phrase de contexte : *"Le papier cible ICLR 2027. Le résultat principal
   est un théorème d'impossibilité sur les canaux de communication dans les
@@ -226,7 +226,7 @@ le titre du projet, ni les expériences planifiées.
 ## Livrables Sprint 0.5
 
 ```
-theory/theorem71_formal.md          ← version provisoire (définitions + énoncé visé)
+theory/tie_formal.md          ← version provisoire (définitions + énoncé visé)
 theory/belnap_tbm_isomorphism.md    ← isomorphisme Belnap/TBM
 theory/corollary_framework.md       ← chaîne déductive TIE → 3 corollaires
 paper/EIP_paper_v0.1.md             ← squelette avec 8 sections vides + titres
@@ -245,7 +245,7 @@ reviews/REV-S0.5.md                 ← rapport Analyste Tâche 3
 [vide]
 ## 3. Résultat principal
 ### 3.1 Définitions
-[pointer vers theory/theorem71_formal.md]
+[pointer vers theory/tie_formal.md]
 ### 3.2 [section à nommer en Sprint ultérieur]
 [vide]
 ### 3.3 [section à nommer en Sprint ultérieur]

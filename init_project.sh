@@ -21,7 +21,7 @@ mkdir -p theory src results figures tests paper brainstorm reviews
 touch README.md CHANGELOG.md QUICK_START.md REPO_STRUCTURE.md STATUS.md VARIABLES.md CLAUDE.md requirements.txt
 
 # Création des fichiers theory/
-touch theory/theorem71_formal.md theory/belnap_tbm_isomorphism.md theory/corollary_framework.md theory/lemme_auditabilite.md
+touch theory/tie_formal.md theory/belnap_tbm_isomorphism.md theory/corollary_framework.md theory/lemme_auditabilite.md
 
 # Création des fichiers src/
 touch src/channels.py src/calibration.py src/experiment.py src/analysis.py src/experiment_corollaries.py src/experiment_hybrid.py

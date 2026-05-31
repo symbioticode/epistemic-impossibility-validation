@@ -48,7 +48,7 @@ epistemic-impossibility-validation/
 ├── init_project.sh                  ← script qui crée l'arborescence
 │
 ├── theory/
-│   ├── theorem71_formal.md          ← squelette vide (sera rempli Sprint 0.5)
+│   ├── tie_formal.md          ← squelette vide (sera rempli Sprint 0.5)
 │   ├── belnap_tbm_isomorphism.md    ← squelette vide (sera rempli Sprint 0.5)
 │   ├── corollary_framework.md       ← squelette vide (sera rempli Sprint 0.5)
 │   └── lemme_auditabilite.md        ← squelette vide (sera rempli Sprint 7)
@@ -194,12 +194,12 @@ Branche principale : main
 
 Le théorème central du projet s'appelle :
   **TIE — Théorème de l'Impossibilité Épistémique**
-  (alias provisoire dans le repo : "Théorème 7.1" / fichier : theorem71_formal.md)
+  (alias provisoire dans le repo : "Théorème 7.1" / fichier : tie_formal.md)
 
 Règle : dans tous les fichiers produits par les instances de travail,
 utiliser "TIE" comme désignation courte et "Théorème de l'Impossibilité
 Épistémique" comme désignation longue.
-Le fichier theorem71_formal.md sera renommé tie_formal.md en Sprint 4
+Le fichier tie_formal.md sera renommé tie_formal.md en Sprint 4
 (git mv + mise à jour des renvois). Pas avant.
 
 ## Règles opérationnelles

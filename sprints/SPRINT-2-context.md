@@ -35,7 +35,7 @@ Tu as besoin de connaître :
 - Les contrats de `results/*.csv` définis ci-dessous
 
 Tu n'as pas besoin de connaître :
-- Le contenu de `theory/theorem71_formal.md`
+- Le contenu de `theory/tie_formal.md`
 - La structure du papier final
 - Le Sprint 7 (lemme de non-circularité)
 - Les corollaires (Sprints 5–6)

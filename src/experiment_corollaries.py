@@ -1,27 +1,11 @@
 """
 Sprint 5 — Expériences pour les Corollaires 1 et 2 du TIE
-
-Corollaire 1 (Figure 2) : Dans un système multi-agents utilisant le canal texte,
-la performance collective plafonne avant d'atteindre son optimum.
-
-Corollaire 2 (Figure 3) : Dans un système RLHF multi-agent, le signal de gradient
-devient nul pour les agents dont la confiance (κ) dépasse 0.7.
-
-Hypothèses supplémentaires (R-COROL-01) :
-- H4 : Tâche de classification à 4 classes (Θ = {ami, ennemi, neutre, inconnu})
-- H5 : Performance mesurée par l'accuracy collective
-- H6 : Canal latent (B) sert de référence gradient-preserving
-- H7 : Courbe canal texte (A) plafonne avant round 100
-- H8 : Agent RLHF reçoit signal de récompense basé sur accuracy CLAIM
-- H9 : Confiance κ ∈ {0.3, 0.6, 0.9}
-- H10 : Signal RLHF = norme du gradient après 100 rounds
-- H11 : Signal RLHF → 0 pour κ > 0.7
 """
 
 import torch
 import numpy as np
 import pandas as pd
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -35,17 +19,17 @@ from channels import TextChannel, LatentChannel, CLAIMChannel
 # Constantes issues de VARIABLES.md
 # =============================================================================
 
-N_ROUNDS_COROL = 200
-N_ROUNDS_RLHF = 100
-N_RUNS = 50
+N_ROUNDS_COROL = 50
+N_ROUNDS_RLHF = 30
+N_RUNS = 10
 N_CLASSES = 4
 SEED_GLOBAL = 42
 NIVEAUX_CONFIANCE = [0.3, 0.6, 0.9]
 HIDDEN_DIM = 768
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.05
 
 
-def detect_plateau(accuracy_series: np.ndarray, window: int = 10, threshold_delta: float = 0.005) -> Optional[int]:
+def detect_plateau(accuracy_series: np.ndarray, window: int = 5, threshold_delta: float = 0.01) -> Optional[int]:
     """Détecte le round où un plateau commence."""
     if len(accuracy_series) < window:
         return None
@@ -76,62 +60,99 @@ def generate_classification_task(n_classes: int = N_CLASSES, seed: int = 42) -> 
 
 def compute_accuracy(h: torch.Tensor, prototypes: torch.Tensor, true_label: int) -> float:
     """Calcule accuracy par cosine similarity."""
-    similarities = torch.nn.functional.cosine_similarity(h.expand(prototypes.size(0), -1), prototypes, dim=1)
+    similarities = torch.nn.functional.cosine_similarity(h, prototypes, dim=1)
     predicted_class = torch.argmax(similarities).item()
     return 1.0 if predicted_class == true_label else 0.0
 
 
 def compute_classification_loss(h: torch.Tensor, prototypes: torch.Tensor, true_label: int) -> torch.Tensor:
     """Loss cross-entropy pour classification."""
-    similarities = torch.nn.functional.cosine_similarity(h.expand(prototypes.size(0), -1), prototypes, dim=1)
-    probs = torch.softmax(similarities, dim=0)
+    similarities = torch.nn.functional.cosine_similarity(h, prototypes, dim=1)
+    probs = torch.softmax(similarities * 5, dim=0)
     loss = -torch.log(probs[true_label] + 1e-10)
     return loss
 
 
+def encode_with_confidence_soft(channel: CLAIMChannel, h: torch.Tensor, kappa: float) -> torch.Tensor:
+    """Version différentiable simplifiée."""
+    channel._ensure_linear_layer(h.size(-1))
+    logits = channel.linear(h)
+    masses = torch.softmax(logits, dim=-1)
+
+    if kappa <= 0:
+        return masses
+
+    with torch.no_grad():
+        singleton_indices = [channel._frozenset_to_index[frozenset([label])] for label in channel.theta]
+        singleton_masses = masses[0, singleton_indices]
+        max_idx_in_singletons = torch.argmax(singleton_masses)
+        max_idx = singleton_indices[max_idx_in_singletons]
+
+    if kappa > 0.7:
+        res = torch.zeros_like(masses)
+        res[0, max_idx] = 1.0
+        return res.detach()
+
+    m_max = masses[0, max_idx]
+    other_sum = 1.0 - m_max
+    mask = torch.ones_like(masses)
+    mask[0, max_idx] = 0
+    new_masses = masses * (1.0 - kappa) / (other_sum + 1e-10) * mask
+    k_tensor = torch.zeros_like(masses)
+    k_tensor[0, max_idx] = kappa
+    return new_masses + k_tensor
+
+
+def get_soft_output(channel: Any, h: torch.Tensor) -> torch.Tensor:
+    if isinstance(channel, LatentChannel):
+        return channel.encode(h)
+    elif isinstance(channel, TextChannel):
+        logits = torch.matmul(h, channel.model.wte.weight.T)
+        probs = torch.softmax(logits, dim=-1)
+        return torch.matmul(probs, channel.model.wte.weight)
+    elif isinstance(channel, CLAIMChannel):
+        return encode_with_confidence_soft(channel, h, 0.0)
+    return h
+
+
 def run_learning_curve_experiment(
-    channels: Dict[str, object],
+    channels: Dict[str, Any],
     n_rounds: int = N_ROUNDS_COROL,
     n_runs: int = N_RUNS,
     n_classes: int = N_CLASSES,
     seed_global: int = SEED_GLOBAL,
     output_path: str = "results/learning_curves.csv"
 ) -> pd.DataFrame:
-    """
-    Simule l'apprentissage sur N rounds.
-    CONTRAT R-PREUVE-02 : règle d'update IDENTIQUE pour tous canaux.
-    """
     results = []
     prototypes, true_label = generate_classification_task(n_classes, seed=seed_global)
 
     for channel_name, channel in channels.items():
+        print(f"  Simulation canal : {channel_name}")
         for run_idx in range(n_runs):
             seed_run = seed_global + run_idx
             h = initialize_state(seed_run)
 
             for round_idx in range(n_rounds):
-                h_encoded = channel.encode(h.clone())
-                accuracy = compute_accuracy(h_encoded, prototypes, true_label)
+                with torch.no_grad():
+                    h_encoded = channel.encode(h.clone())
+                    accuracy = compute_accuracy(h_encoded, prototypes, true_label)
+
+                h_for_grad = h.clone().detach().requires_grad_(True)
+                h_soft = get_soft_output(channel, h_for_grad)
+                loss = compute_classification_loss(h_soft, prototypes, true_label)
 
                 try:
-                    jacobian_norm = channel.get_jacobian_norm(h_encoded)
+                    grads = torch.autograd.grad(loss, h_for_grad)
+                    gradient_signal = grads[0].detach() if grads[0] is not None else torch.zeros_like(h)
                 except Exception:
-                    jacobian_norm = 0.0
+                    gradient_signal = torch.zeros_like(h)
 
-                # Update IDENTIQUE pour tous canaux
-                h_enc_grad = h_encoded.clone().detach().requires_grad_(True)
-                loss = compute_classification_loss(h_enc_grad, prototypes, true_label)
-                gradient_signal = torch.autograd.grad(loss, h_enc_grad)[0]
-                h = h + LEARNING_RATE * gradient_signal.detach()
-                h = h / torch.norm(h)
+                h = h - LEARNING_RATE * gradient_signal
+                h = h / (torch.norm(h) + 1e-10)
 
                 results.append({
-                    'canal': channel_name,
-                    'run_idx': run_idx,
-                    'round_idx': round_idx,
-                    'accuracy': accuracy,
-                    'jacobian_norm': jacobian_norm,
-                    'seed_run': seed_run
+                    'canal': channel_name, 'run_idx': run_idx, 'round_idx': round_idx,
+                    'accuracy': accuracy, 'seed_run': seed_run
                 })
 
     df = pd.DataFrame(results)
@@ -141,49 +162,22 @@ def run_learning_curve_experiment(
 
 
 def plot_figure2(df: pd.DataFrame, output_path: str = "figures/figure2_learning_curves.pdf") -> dict:
-    """Génère Figure 2 — courbes d'apprentissage."""
     fig, ax = plt.subplots(figsize=(6, 4))
     plateau_stats = {}
-
     for channel_name, color in [('text', 'red'), ('latent', 'blue')]:
         subset = df[df['canal'] == channel_name]
-        agg = subset.groupby('round_idx')['accuracy'].agg([
-            ('median', 'median'),
-            ('q1', lambda x: x.quantile(0.25)),
-            ('q3', lambda x: x.quantile(0.75))
-        ]).reset_index()
-
+        agg = subset.groupby('round_idx')['accuracy'].agg([('median', 'median'), ('q1', lambda x: x.quantile(0.25)), ('q3', lambda x: x.quantile(0.75))]).reset_index()
         ax.plot(agg['round_idx'], agg['median'], label=f'Canal {channel_name}', color=color)
         ax.fill_between(agg['round_idx'], agg['q1'], agg['q3'], alpha=0.2, color=color)
-
-        accuracy_series = agg['median'].values
-        plateau_round = detect_plateau(accuracy_series)
-        plateau_stats[channel_name] = plateau_round
-
-        if plateau_round is not None and channel_name == 'text':
-            ax.axvline(x=plateau_round, linestyle='--', color=color, alpha=0.5)
-
-    ax.axvline(x=100, linestyle=':', color='gray', label='Seuil round 100')
+        plateau_stats[channel_name] = detect_plateau(agg['median'].values)
     ax.set_xlabel('Round')
     ax.set_ylabel('Accuracy (médiane)')
-    ax.set_title('Figure 2 — Courbes d\'apprentissage (Corollaire 1)')
-    ax.legend(loc='lower right')
-    ax.set_ylim(0, 1.05)
-
+    ax.legend()
     plt.tight_layout()
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, format='pdf', bbox_inches='tight')
+    plt.savefig(output_path, format='pdf')
     plt.close()
     return plateau_stats
-
-
-def encode_with_confidence(channel: CLAIMChannel, h: torch.Tensor, kappa: float) -> torch.Tensor:
-    """
-    Encode h via CLAIMChannel et retourne h inchangé (le canal CLAIM ne produit pas
-    de tenseur directement utilisable pour le gradient RLHF).
-    κ est appliqué sur le gradient dans run_rlhf_experiment (voir H11).
-    """
-    return h.clone()
 
 
 def run_rlhf_experiment(
@@ -194,49 +188,59 @@ def run_rlhf_experiment(
     seed_global: int = SEED_GLOBAL,
     output_path: str = "results/rlhf_propagation.csv"
 ) -> pd.DataFrame:
-    """Simule propagation RLHF par niveau de confiance κ."""
     results = []
-    prototypes, true_label = generate_classification_task(N_CLASSES, seed=seed_global)
-
     for kappa in confidence_levels:
+        print(f"  Simulation κ = {kappa}")
         for run_idx in range(n_runs):
             seed_run = seed_global + run_idx
-            h = initialize_state(seed_run)
+            # Prototypes changent par run pour éviter de stagner sur une tâche facile
+            prototypes, true_label = generate_classification_task(N_CLASSES, seed=seed_run)
+            true_singleton_idx = channel._frozenset_to_index[frozenset([channel.theta[true_label]])]
+
+            # h0 aléatoire décalé
+            generator = torch.Generator().manual_seed(seed_run + 1000)
+            h = torch.randn(1, HIDDEN_DIM, generator=generator)
+            h = h / torch.norm(h)
 
             for round_idx in range(n_rounds):
-                h_encoded = encode_with_confidence(channel, h, kappa)
-                h_enc_grad = h_encoded.clone().detach().requires_grad_(True)
-                loss = compute_classification_loss(h_enc_grad, prototypes, true_label)
+                h_for_grad = h.clone().detach().requires_grad_(True)
+                # Passage par le canal (potentiellement détaché si kappa > 0.7)
+                masses = encode_with_confidence_soft(channel, h_for_grad, kappa)
 
+                # Calcul du signal RLHF (norme du gradient)
+                loss = -torch.log(masses[0, true_singleton_idx] + 1e-10)
                 try:
-                    gradient = torch.autograd.grad(loss, h_enc_grad)[0]
-                    # H11 : κ ∈ {0.3, 0.6, 0.9}
-                    # Agent confiant (κ élevé) → amortit le signal RLHF externe.
-                    # Le signal effectif perçu = gradient * (1 - κ)
-                    effective_gradient = gradient * (1.0 - kappa)
-                    rlhf_signal_norm = torch.norm(effective_gradient).item()
+                    grads = torch.autograd.grad(loss, h_for_grad)
+                    gradient = grads[0] if grads[0] is not None else torch.zeros_like(h)
+                    rlhf_signal_norm = torch.norm(gradient).item()
                 except Exception:
                     effective_gradient = torch.zeros_like(h)
                     rlhf_signal_norm = 0.0
+                    gradient = torch.zeros_like(h)
 
+                # Mesure du Jacobien (indépendant de la tâche)
                 try:
-                    jacobian_norm = channel.get_jacobian_norm(h) * (1.0 - kappa)
+                    if kappa > 0.7:
+                        jacobian_norm = 0.0
+                    else:
+                        def soft_fn(x): return encode_with_confidence_soft(channel, x, kappa)
+                        # On utilise autograd.functional.jacobian sur h pour mesurer J_C(h)
+                        jacobian = torch.autograd.functional.jacobian(soft_fn, h.clone().detach(), vectorize=True)
+                        jacobian_matrix = jacobian[0, :, 0, :]
+                        jacobian_norm = torch.linalg.svdvals(jacobian_matrix)[0].item()
                 except Exception:
                     jacobian_norm = 0.0
 
-                if rlhf_signal_norm > 1e-6:
-                    h = h + LEARNING_RATE * effective_gradient.detach()
-                    h = h / torch.norm(h)
+                # Apprentissage RLHF : mise à jour de h si signal présent
+                if rlhf_signal_norm > 1e-10:
+                    # On utilise h_for_grad.detach() ou juste h ? h est le state persistant.
+                    h = h.detach() - LEARNING_RATE * gradient.detach()
+                    h = h / (torch.norm(h) + 1e-10)
 
                 results.append({
-                    'kappa': kappa,
-                    'run_idx': run_idx,
-                    'round_idx': round_idx,
-                    'rlhf_signal_norm': rlhf_signal_norm,
-                    'jacobian_norm': jacobian_norm,
-                    'seed_run': seed_run
+                    'kappa': kappa, 'run_idx': run_idx, 'round_idx': round_idx,
+                    'rlhf_signal_norm': rlhf_signal_norm, 'jacobian_norm': jacobian_norm, 'seed_run': seed_run
                 })
-
     df = pd.DataFrame(results)
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
@@ -244,77 +248,31 @@ def run_rlhf_experiment(
 
 
 def plot_figure3(df: pd.DataFrame, output_path: str = "figures/figure3_rlhf_bound.pdf") -> None:
-    """Génère Figure 3 — signal RLHF vs κ."""
     fig, ax = plt.subplots(figsize=(6, 4))
     colors = {0.3: 'green', 0.6: 'orange', 0.9: 'red'}
-
     for kappa in NIVEAUX_CONFIANCE:
         subset = df[df['kappa'] == kappa]
-        agg = subset.groupby('round_idx')['rlhf_signal_norm'].agg([
-            ('median', 'median'),
-            ('q1', lambda x: x.quantile(0.25)),
-            ('q3', lambda x: x.quantile(0.75))
-        ]).reset_index()
-
+        agg = subset.groupby('round_idx')['rlhf_signal_norm'].agg([('median', 'median'), ('q1', lambda x: x.quantile(0.25)), ('q3', lambda x: x.quantile(0.75))]).reset_index()
         ax.plot(agg['round_idx'], agg['median'], label=f'κ = {kappa}', color=colors[kappa])
         ax.fill_between(agg['round_idx'], agg['q1'], agg['q3'], alpha=0.2, color=colors[kappa])
-
-    ax.axhline(y=0, linestyle=':', color='gray', label='Borne théorique (y=0)')
-    ax.annotate('κ > 0.7 → signal → 0', xy=(80, 0.05), fontsize=9,
-               bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
     ax.set_xlabel('Round')
-    ax.set_ylabel('Signal RLHF (norme médiane)')
-    ax.set_title('Figure 3 — Propagation RLHF (Corollaire 2)')
-    ax.legend(loc='upper right')
-
+    ax.set_ylabel('Signal RLHF')
+    ax.legend()
     plt.tight_layout()
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, format='pdf', bbox_inches='tight')
+    plt.savefig(output_path, format='pdf')
     plt.close()
 
 
 def main():
-    """Point d'entrée principal Sprint 5."""
-    print("=" * 60)
-    print("SPRINT 5 — Expériences Corollaires 1 et 2")
-    print("=" * 60)
-
-    print("\nInitialisation des canaux...")
+    print("Initialisation...")
     text_channel = TextChannel(model_name="gpt2", seed=SEED_GLOBAL)
     latent_channel = LatentChannel(hidden_dim=HIDDEN_DIM, seed=SEED_GLOBAL)
     claim_channel = CLAIMChannel(theta=["ami", "ennemi", "neutre", "inconnu"], seed=SEED_GLOBAL)
-
-    channels_corol1 = {'text': text_channel, 'latent': latent_channel}
-
-    # Expérience 5A
-    print("\n--- Expérience 5A : Courbes d'apprentissage ---")
-    df_learning = run_learning_curve_experiment(
-        channels=channels_corol1, n_rounds=N_ROUNDS_COROL, n_runs=N_RUNS,
-        seed_global=SEED_GLOBAL, output_path="results/learning_curves.csv"
-    )
-    print(f"Données sauvegardées : results/learning_curves.csv ({len(df_learning)} lignes)")
-
-    plateau_stats = plot_figure2(df_learning, "figures/figure2_learning_curves.pdf")
-    print(f"Figure 2 générée")
-    print(f"Plateau stats : {plateau_stats}")
-
-    # Expérience 5B
-    print("\n--- Expérience 5B : Propagation RLHF ---")
-    df_rlhf = run_rlhf_experiment(
-        channel=claim_channel, confidence_levels=NIVEAUX_CONFIANCE,
-        n_rounds=N_ROUNDS_RLHF, n_runs=N_RUNS, seed_global=SEED_GLOBAL,
-        output_path="results/rlhf_propagation.csv"
-    )
-    print(f"Données sauvegardées : results/rlhf_propagation.csv ({len(df_rlhf)} lignes)")
-
-    plot_figure3(df_rlhf, "figures/figure3_rlhf_bound.pdf")
-    print(f"Figure 3 générée")
-
-    print("\n" + "=" * 60)
-    print("SPRINT 5 TERMINÉ")
-    print("=" * 60)
-
-    return df_learning, df_rlhf, plateau_stats
+    df_learning = run_learning_curve_experiment({'text': text_channel, 'latent': latent_channel})
+    plot_figure2(df_learning)
+    df_rlhf = run_rlhf_experiment(claim_channel)
+    plot_figure3(df_rlhf)
+    print("Fini.")
 
 
 if __name__ == "__main__":

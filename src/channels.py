@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import Union
+from typing import Union, Protocol
 from transformers import GPT2Model, GPT2Tokenizer
 import math
 from dataclasses import dataclass
@@ -115,9 +115,30 @@ class TextChannel:
             # Differentiable approximation: weighted sum of embeddings
             return torch.matmul(probs, self.model.wte.weight)
         
-        # Use power iteration for spectral norm estimation
-        # For TextChannel, we use n_vecs=2 due to low-rank structure
-        return _spectral_norm_power(soft_encode_fn, h, n_vecs=2)
+        # Compute Jacobian using torch.autograd.functional.jacobian
+        jacobian = torch.autograd.functional.jacobian(soft_encode_fn, h_clone, vectorize=True)
+        
+        # The Jacobian will have shape (batch, hidden_dim, batch, hidden_dim)
+        # We need the spectral norm for each batch element and then take the max or average?
+        # According to the contract, we return a float. Let's compute the spectral norm for the first batch element
+        # and return it. Alternatively, we can flatten the batch and hidden dimensions?
+        # The spec says: norme spectrale du jacobien de encode() en h.
+        # For a single input (batch=1), the Jacobian is (hidden_dim, hidden_dim)
+        if h_clone.dim() == 2 and h_clone.size(0) == 1:
+            # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
+            jacobian_single = jacobian[0, :, 0, :]  # (hidden_dim, hidden_dim)
+            # Compute spectral norm (largest singular value)
+            singular_values = torch.linalg.svdvals(jacobian_single)
+            spectral_norm = singular_values[0].item()
+            return max(spectral_norm, 0.0)  # Ensure non-negative
+        else:
+            # For batch size > 1, we compute the spectral norm for each sample and return the max
+            spectral_norms = []
+            for i in range(h_clone.size(0)):
+                jacobian_i = jacobian[i, :, i, :]  # (hidden_dim, hidden_dim)
+                singular_values = torch.linalg.svdvals(jacobian_i)
+                spectral_norms.append(singular_values[0].item())
+            return max(spectral_norms) if spectral_norms else 0.0
 
     def get_output_entropy(self, h: torch.Tensor) -> float:
         """
@@ -205,9 +226,25 @@ class LatentChannel:
         def encode_fn(x):
             return self.encode(x)
         
-        # Use power iteration for spectral norm estimation
-        # For LatentChannel, we use n_vecs=5
-        return _spectral_norm_power(encode_fn, h, n_vecs=5)
+        # Compute Jacobian using torch.autograd.functional.jacobian
+        jacobian = torch.autograd.functional.jacobian(encode_fn, h_clone, vectorize=True)
+        
+        # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
+        if h_clone.dim() == 2 and h_clone.size(0) == 1:
+            # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
+            jacobian_single = jacobian[0, :, 0, :]  # (hidden_dim, hidden_dim)
+            # Compute spectral norm (largest singular value)
+            singular_values = torch.linalg.svdvals(jacobian_single)
+            spectral_norm = singular_values[0].item()
+            return max(spectral_norm, 0.0)  # Ensure non-negative
+        else:
+            # For batch size > 1, we compute the spectral norm for each sample and return the max
+            spectral_norms = []
+            for i in range(h_clone.size(0)):
+                jacobian_i = jacobian[i, :, i, :]  # (hidden_dim, hidden_dim)
+                singular_values = torch.linalg.svdvals(jacobian_i)
+                spectral_norms.append(singular_values[0].item())
+            return max(spectral_norms) if spectral_norms else 0.0
 
     def get_output_entropy(self, h: torch.Tensor) -> float:
         """
@@ -256,11 +293,6 @@ class LatentChannel:
             return entropy.item()
 
 
-from dataclasses import dataclass
-from typing import Literal, Dict, FrozenSet
-import torch
-
-
 @dataclass(frozen=True)
 class CLAIM:
     """
@@ -274,8 +306,6 @@ class CLAIM:
     freshness: tuple[float, float]                 # (t_obs, Δt_valid) — stub
     provenance: str                                # chain_id — stub
 
-
-from typing import Protocol
 
 class Channel(Protocol):
     """Interface commune à tous les canaux."""
@@ -477,11 +507,7 @@ class CLAIMChannel:
             jacobian_matrix = jacobian[0, :, 0, :]  # (powerset_size, hidden_dim)
             # Compute spectral norm (largest singular value)
             try:
-<<<<<<< HEAD
-                _, singular_values, _ = torch.svd(jacobian_matrix)
-=======
                 singular_values = torch.linalg.svdvals(jacobian_matrix)
->>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
                 spectral_norm = singular_values[0].item()
                 return max(spectral_norm, 0.0)  # Ensure non-negative
             except:
@@ -493,13 +519,10 @@ class CLAIMChannel:
             for i in range(h_clone.size(0)):
                 jacobian_matrix = jacobian[i, :, i, :]  # (powerset_size, hidden_dim)
                 try:
-<<<<<<< HEAD
-                    _, singular_values, _ = torch.svd(jacobian_matrix)
-=======
                     singular_values = torch.linalg.svdvals(jacobian_matrix)
->>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
                     spectral_norms.append(singular_values[0].item())
                 except:
+
                     spectral_norms.append(0.0)
             return max(spectral_norms) if spectral_norms else 0.0
 
