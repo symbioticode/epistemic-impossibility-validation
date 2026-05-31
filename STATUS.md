@@ -25,7 +25,7 @@ Théorème 7.1 (TIE) **démontré end-to-end** dans `theory/tie_formal.md` :
 Sprint 3 (préparation rédaction) — EN COURS
 
 ### Piste expérimentale
-Sprint 2 — [À définir] — PRÊT
+Sprint 2 — [À définir] — TERMINÉ
 
 ## Sprints complétés
 - Sprint 0 — Préparation infrastructure — TERMINÉ

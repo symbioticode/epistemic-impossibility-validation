@@ -201,40 +201,13 @@ class LatentChannel:
         """
         Même contrat que TextChannel.get_jacobian_norm.
         """
-        # Enable gradients for h to compute Jacobian
-        h_clone = h.clone().detach().requires_grad_(True)
-        
         # Define the function for which we want the Jacobian
         def encode_fn(x):
             return self.encode(x)
         
-        # Compute Jacobian using torch.autograd.functional.jacobian
-        jacobian = torch.autograd.functional.jacobian(encode_fn, h_clone, vectorize=True)
-        
-        # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
-        if h_clone.dim() == 2 and h_clone.size(0) == 1:
-            # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
-            jacobian_single = jacobian[0, :, 0, :]  # (hidden_dim, hidden_dim)
-            # Compute spectral norm (largest singular value)
-<<<<<<< HEAD
-            _, singular_values, _ = torch.svd(jacobian_single)
-=======
-            singular_values = torch.linalg.svdvals(jacobian_single)
->>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
-            spectral_norm = singular_values[0].item()
-            return max(spectral_norm, 0.0)  # Ensure non-negative
-        else:
-            # For batch size > 1, we compute the spectral norm for each sample and return the max
-            spectral_norms = []
-            for i in range(h_clone.size(0)):
-                jacobian_i = jacobian[i, :, i, :]  # (hidden_dim, hidden_dim)
-<<<<<<< HEAD
-                _, singular_values, _ = torch.svd(jacobian_i)
-=======
-                singular_values = torch.linalg.svdvals(jacobian_i)
->>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
-                spectral_norms.append(singular_values[0].item())
-            return max(spectral_norms) if spectral_norms else 0.0
+        # Use power iteration for spectral norm estimation
+        # For LatentChannel, we use n_vecs=5
+        return _spectral_norm_power(encode_fn, h, n_vecs=5)
 
     def get_output_entropy(self, h: torch.Tensor) -> float:
         """
