@@ -1,5 +1,6 @@
 # STATUS — epistemic-impossibility-validation
 
+<<<<<<< HEAD
 **Sprint courant :** 4 (rédaction du papier) + 2 (piste expérimentale)
 **Statut :** EN COURS
 **Version chantier :** v4 (5 questions, 7 sprints)
@@ -52,3 +53,20 @@ Sprint 2 — [À définir] — PRÊT
 ### Piste expérimentale (non bloquée)
 1. Définir les protocoles expérimentaux du Sprint 2.
 2. Lancer la Figure 1 (Baseline Gradient vs Entropy).
+=======
+**Sprint courant :** 2
+**Statut :** EN COURS
+**Version chantier :** v4 (5 questions, 7 sprints)
+**Dernière mise à jour :** 31 mai 2026
+
+## Sprint courant
+Sprint 2 — [À définir] — EN COURS
+
+## Sprints complétés
+Sprint 0 — Préparation infrastructure — TERMINÉ
+Sprint 0.5 — Formalisation théorique préalable — TERMINÉ
+Sprint 1 — Instrumentation des canaux — TERMINÉ (Validé par l'Analyste)
+
+## Prochaine action
+[À définir après lecture de SPRINT-2.context.md]
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)

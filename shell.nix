@@ -21,4 +21,8 @@ pkgs.mkShell {
     echo "   PyTorch   : $(python -c 'import torch; print(torch.__version__)' 2>/dev/null || echo 'non chargé')"
     echo "   Transformers: $(python -c 'import transformers; print(transformers.__version__)' 2>/dev/null || echo 'non chargé')"
   '';
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
