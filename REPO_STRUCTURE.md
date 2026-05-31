@@ -12,7 +12,7 @@ epistemic-impossibility-validation/
 ├── init_project.sh                  ← script qui crée l'arborescence
 │
 ├── theory/
-│   ├── theorem71_formal.md          ← squelette vide (sera rempli Sprint 0.5)
+│   ├── tie_formal.md          ← squelette vide (sera rempli Sprint 0.5)
 │   ├── belnap_tbm_isomorphism.md    ← squelette vide (sera rempli Sprint 0.5)
 │   ├── corollary_framework.md       ← squelette vide (sera rempli Sprint 0.5)
 │   └── lemme_auditabilite.md        ← squelette vide (sera rempli Sprint 7)

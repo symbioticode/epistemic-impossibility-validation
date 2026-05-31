@@ -25,7 +25,7 @@ echo "✅" && PASS=$((PASS+1))
 
 # 3. Fichiers theory/ (4 squelettes)
 echo -n "□ theory/*.md (4 fichiers) ... "
-THEORY_FILES=("theorem71_formal.md" "belnap_tbm_isomorphism.md" "corollary_framework.md" "lemme_auditabilite.md")
+THEORY_FILES=("tie_formal.md" "belnap_tbm_isomorphism.md" "corollary_framework.md" "lemme_auditabilite.md")
 for f in "${THEORY_FILES[@]}"; do
     [[ -f "theory/$f" ]] || { echo "❌ theory/$f manquant"; FAIL=$((FAIL+1)); continue; }
 done

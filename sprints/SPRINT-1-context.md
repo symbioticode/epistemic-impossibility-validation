@@ -5,7 +5,7 @@
 
 > **Règle de session :** ce fichier est le seul contexte de cette session.
 > Commence par : `git pull` + lecture de `STATUS.md` + lecture de
-> `theory/theorem71_formal.md` (version Sprint 0.5, commité).
+> `theory/tie_formal.md` (version Sprint 0.5, commité).
 > La source de vérité est le repo — pas cette conversation.
 
 > **Principe de cette session :** tu instrumentes les trois canaux comme
@@ -27,7 +27,7 @@ Ces trois canaux seront utilisés dans des expériences de comparaison (sprints 
 
 Tu as besoin de connaître :
 - Les paramètres techniques dans `VARIABLES.md` (déjà commité)
-- Les définitions formelles dans `theory/theorem71_formal.md` (déjà commité)
+- Les définitions formelles dans `theory/tie_formal.md` (déjà commité)
 - Les contrats API définis ci-dessous
 
 Tu n'as pas besoin de connaître :
@@ -186,7 +186,7 @@ def test_latent_channel_gradient_preserving():
 ### Contexte
 
 Le canal C transforme un état latent h en une structure CLAIM formelle.
-La structure CLAIM est définie dans `theory/theorem71_formal.md` (commité).
+La structure CLAIM est définie dans `theory/tie_formal.md` (commité).
 Elle comporte cinq champs. Pour ce sprint, l'implémentation est simplifiée :
 les champs `freshness` et `provenance` sont des stubs fonctionnels.
 
