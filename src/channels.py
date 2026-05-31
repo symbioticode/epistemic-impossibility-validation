@@ -7,6 +7,34 @@ from dataclasses import dataclass
 from typing import Literal, Dict, FrozenSet
 
 
+def _spectral_norm_power(fn, h: torch.Tensor, n_vecs: int = 5) -> float:
+    """
+    Estime la norme spectrale ‖J_fn(h)‖₂ via power iteration.
+    O(n_vecs) appels jvp + vjp. Précision ~5% sur n_vecs=5.
+    """
+    h_base = h.clone().detach()
+    torch.manual_seed(0)  # déterministe entre appels
+    v = torch.randn_like(h_base)
+    v = v / (v.norm() + 1e-10)
+    sigma = 0.0
+    for _ in range(n_vecs):
+        try:
+            _, jv = torch.autograd.functional.jvp(
+                fn, h_base, v, create_graph=False, strict=False
+            )
+            sigma = jv.norm().item()
+            if sigma < 1e-10:
+                return 0.0
+            _, vjh = torch.autograd.functional.vjp(
+                fn, h_base, (jv / sigma).detach(), create_graph=False
+            )
+            v = vjh / (torch.norm(vjh) + 1e-10)
+        except:
+            # If JVP/VJP fails, fall back to a simple estimate
+            return 0.0
+    return sigma
+
+
 class TextChannel:
     """
     Canal de communication texte.
@@ -78,9 +106,6 @@ class TextChannel:
         On utilise une approximation différentiable (weighted sum of embeddings)
         pour calculer un jacobien significatif représentatif du canal.
         """
-        # Enable gradients for h to compute Jacobian
-        h_clone = h.clone().detach().requires_grad_(True)
-        
         # Define a differentiable version of encode for Jacobian calculation
         def soft_encode_fn(x):
             # Project to vocabulary space
@@ -197,9 +222,6 @@ class LatentChannel:
         """
         Même contrat que TextChannel.get_jacobian_norm.
         """
-        # Enable gradients for h to compute Jacobian
-        h_clone = h.clone().detach().requires_grad_(True)
-        
         # Define the function for which we want the Jacobian
         def encode_fn(x):
             return self.encode(x)

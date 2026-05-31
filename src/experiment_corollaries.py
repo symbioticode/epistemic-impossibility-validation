@@ -10,8 +10,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).parent))
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from channels import TextChannel, LatentChannel, CLAIMChannel
 
 
@@ -214,6 +214,7 @@ def run_rlhf_experiment(
                     gradient = grads[0] if grads[0] is not None else torch.zeros_like(h)
                     rlhf_signal_norm = torch.norm(gradient).item()
                 except Exception:
+                    effective_gradient = torch.zeros_like(h)
                     rlhf_signal_norm = 0.0
                     gradient = torch.zeros_like(h)
 
