@@ -103,7 +103,11 @@ class TextChannel:
             # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
             jacobian_single = jacobian[0, :, 0, :]  # (hidden_dim, hidden_dim)
             # Compute spectral norm (largest singular value)
+<<<<<<< HEAD
+            _, singular_values, _ = torch.svd(jacobian_single)
+=======
             singular_values = torch.linalg.svdvals(jacobian_single)
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
             spectral_norm = singular_values[0].item()
             return max(spectral_norm, 0.0)  # Ensure non-negative
         else:
@@ -111,7 +115,11 @@ class TextChannel:
             spectral_norms = []
             for i in range(h_clone.size(0)):
                 jacobian_i = jacobian[i, :, i, :]  # (hidden_dim, hidden_dim)
+<<<<<<< HEAD
+                _, singular_values, _ = torch.svd(jacobian_i)
+=======
                 singular_values = torch.linalg.svdvals(jacobian_i)
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
                 spectral_norms.append(singular_values[0].item())
             return max(spectral_norms) if spectral_norms else 0.0
 
@@ -212,7 +220,11 @@ class LatentChannel:
             # For batch size 1, Jacobian is (hidden_dim, hidden_dim)
             jacobian_single = jacobian[0, :, 0, :]  # (hidden_dim, hidden_dim)
             # Compute spectral norm (largest singular value)
+<<<<<<< HEAD
+            _, singular_values, _ = torch.svd(jacobian_single)
+=======
             singular_values = torch.linalg.svdvals(jacobian_single)
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
             spectral_norm = singular_values[0].item()
             return max(spectral_norm, 0.0)  # Ensure non-negative
         else:
@@ -220,7 +232,11 @@ class LatentChannel:
             spectral_norms = []
             for i in range(h_clone.size(0)):
                 jacobian_i = jacobian[i, :, i, :]  # (hidden_dim, hidden_dim)
+<<<<<<< HEAD
+                _, singular_values, _ = torch.svd(jacobian_i)
+=======
                 singular_values = torch.linalg.svdvals(jacobian_i)
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
                 spectral_norms.append(singular_values[0].item())
             return max(spectral_norms) if spectral_norms else 0.0
 
@@ -492,7 +508,11 @@ class CLAIMChannel:
             jacobian_matrix = jacobian[0, :, 0, :]  # (powerset_size, hidden_dim)
             # Compute spectral norm (largest singular value)
             try:
+<<<<<<< HEAD
+                _, singular_values, _ = torch.svd(jacobian_matrix)
+=======
                 singular_values = torch.linalg.svdvals(jacobian_matrix)
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
                 spectral_norm = singular_values[0].item()
                 return max(spectral_norm, 0.0)  # Ensure non-negative
             except:
@@ -504,10 +524,13 @@ class CLAIMChannel:
             for i in range(h_clone.size(0)):
                 jacobian_matrix = jacobian[i, :, i, :]  # (powerset_size, hidden_dim)
                 try:
+<<<<<<< HEAD
+                    _, singular_values, _ = torch.svd(jacobian_matrix)
+=======
                     singular_values = torch.linalg.svdvals(jacobian_matrix)
+>>>>>>> 7f49470 (src,results,tests: 20 fichier(s) — 2026-05-31 05:22)
                     spectral_norms.append(singular_values[0].item())
                 except:
-
                     spectral_norms.append(0.0)
             return max(spectral_norms) if spectral_norms else 0.0
 

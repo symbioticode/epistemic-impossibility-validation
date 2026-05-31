@@ -507,7 +507,6 @@ class CLAIMChannel:
                     singular_values = torch.linalg.svdvals(jacobian_matrix)
                     spectral_norms.append(singular_values[0].item())
                 except:
-
                     spectral_norms.append(0.0)
             return max(spectral_norms) if spectral_norms else 0.0
 
