@@ -1,4 +1,3 @@
-cat > shell.nix << 'EOF'
 # shell.nix — Environnement reproductible pour EIP (NixOS 25.05)
 { pkgs ? import <nixpkgs> {} }:
 
@@ -23,4 +22,3 @@ pkgs.mkShell {
     echo "   Transformers: $(python -c 'import transformers; print(transformers.__version__)' 2>/dev/null || echo 'non chargé')"
   '';
 }
-EOF
