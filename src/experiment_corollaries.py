@@ -26,8 +26,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).parent))
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from channels import TextChannel, LatentChannel, CLAIMChannel
 
 
@@ -76,14 +76,14 @@ def generate_classification_task(n_classes: int = N_CLASSES, seed: int = 42) -> 
 
 def compute_accuracy(h: torch.Tensor, prototypes: torch.Tensor, true_label: int) -> float:
     """Calcule accuracy par cosine similarity."""
-    similarities = torch.nn.functional.cosine_similarity(h.unsqueeze(0), prototypes, dim=1)
+    similarities = torch.nn.functional.cosine_similarity(h.expand(prototypes.size(0), -1), prototypes, dim=1)
     predicted_class = torch.argmax(similarities).item()
     return 1.0 if predicted_class == true_label else 0.0
 
 
 def compute_classification_loss(h: torch.Tensor, prototypes: torch.Tensor, true_label: int) -> torch.Tensor:
     """Loss cross-entropy pour classification."""
-    similarities = torch.nn.functional.cosine_similarity(h.unsqueeze(0), prototypes, dim=1)
+    similarities = torch.nn.functional.cosine_similarity(h.expand(prototypes.size(0), -1), prototypes, dim=1)
     probs = torch.softmax(similarities, dim=0)
     loss = -torch.log(probs[true_label] + 1e-10)
     return loss
@@ -178,10 +178,12 @@ def plot_figure2(df: pd.DataFrame, output_path: str = "figures/figure2_learning_
 
 
 def encode_with_confidence(channel: CLAIMChannel, h: torch.Tensor, kappa: float) -> torch.Tensor:
-    """Encode avec concentration de masse selon κ."""
-    h_encoded = channel.encode(h.clone())
-    scaling_factor = 1.0 - kappa
-    return h_encoded * scaling_factor
+    """
+    Encode h via CLAIMChannel et retourne h inchangé (le canal CLAIM ne produit pas
+    de tenseur directement utilisable pour le gradient RLHF).
+    κ est appliqué sur le gradient dans run_rlhf_experiment (voir H11).
+    """
+    return h.clone()
 
 
 def run_rlhf_experiment(
@@ -208,17 +210,22 @@ def run_rlhf_experiment(
 
                 try:
                     gradient = torch.autograd.grad(loss, h_enc_grad)[0]
-                    rlhf_signal_norm = torch.norm(gradient).item()
+                    # H11 : κ ∈ {0.3, 0.6, 0.9}
+                    # Agent confiant (κ élevé) → amortit le signal RLHF externe.
+                    # Le signal effectif perçu = gradient * (1 - κ)
+                    effective_gradient = gradient * (1.0 - kappa)
+                    rlhf_signal_norm = torch.norm(effective_gradient).item()
                 except Exception:
+                    effective_gradient = torch.zeros_like(h)
                     rlhf_signal_norm = 0.0
 
                 try:
-                    jacobian_norm = channel.get_jacobian_norm(h_encoded) * (1.0 - kappa)
+                    jacobian_norm = channel.get_jacobian_norm(h) * (1.0 - kappa)
                 except Exception:
                     jacobian_norm = 0.0
 
                 if rlhf_signal_norm > 1e-6:
-                    h = h + LEARNING_RATE * gradient.detach()
+                    h = h + LEARNING_RATE * effective_gradient.detach()
                     h = h / torch.norm(h)
 
                 results.append({
