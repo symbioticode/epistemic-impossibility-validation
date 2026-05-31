@@ -2,7 +2,38 @@
 
 > **Sprint 7 — Tâche 7.1 — Démonstration**
 > Instance : Opus 4.7 (extended thinking)
-> Statut : démontré, en attente verdict Analyste (Tâche 7.2)
+> Statut : **DÉMONTRÉ MAIS INSUFFISANT** (cf. REV-S7, Q3 NO-GO)
+
+---
+
+## ⚠️ Verdict Analyste (REV-S7, Mai 2026)
+
+| Question | Verdict |
+|---|---|
+| Q1 — Non-circularité | **GO** — aucune hypothèse cachée détectée |
+| Q2 — Nécessité de (a)(b)(c) | **GO** — toutes utilisées, aucune superflue |
+| Q3 — Suffisance pour Théorème 7.1 | **NO-GO** — gap topologique |
+
+**La preuve ci-dessous est correcte** (Q1 GO, Q2 GO) — elle établit
+proprement que O_cert est au plus dénombrable à partir de (a), (b), (c).
+
+**Mais elle est insuffisante** pour la chaîne de preuve du Théorème 7.1.
+Deux gaps identifiés par l'Analyste :
+
+- **G1.** (a)(b)(c) n'imposent pas C(ℳ) ⊆ O_cert.
+- **G2.** La dénombrabilité ensembliste ne contraint pas la topologie héritée
+  de O_cert. Un ensemble dénombrable peut être muni d'une topologie non-discrète
+  (contre-exemple : ℚ ⊂ ℝ).
+
+**Décision Sprint 7 :** RETOUR Tâche 7.1, itération 2. Le renforcement requis
+(C(ℳ) ⊆ O_cert et/ou topologie sur O) est tracé dans `brainstorm/BR-010.md` §QO-S7-01.
+Décision PI attendue avant ré-écriture (R-DEC-01).
+
+**La preuve ci-dessous reste valide** comme **première étape** du Lemme renforcé.
+Ne pas la re-démontrer. Elle sera complétée par une étape topologique
+supplémentaire selon l'option choisie par le PI.
+
+---
 
 ---
 
