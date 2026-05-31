@@ -84,9 +84,9 @@ Vérifier que chaque classe respecte exactement les contrats spécifiés dans SP
 
 ## Fichiers de référence
 - SPRINT-1-context.md : Spécifications détaillées du Sprint 1
-- theory/theorem71_formal.md : Définition formelle du théorème TIE (pour contexte)
+- theory/tie_formal.md : Définition formelle du théorème TIE (pour contexte)
 - VARIABLES.md : Paramètres techniques de référence
 - STATUS.md : État actuel du projet (Sprint 1 terminé)
 
 ## Note importante
-Seul le fichier `theorem71_formal.md` pourra être renommé en `tie_formal.md` lors du Sprint 4. Ne pas modifier ce fichier pendant cette revue.
+Seul le fichier `tie_formal.md` pourra être renommé en `tie_formal.md` lors du Sprint 4. Ne pas modifier ce fichier pendant cette revue.

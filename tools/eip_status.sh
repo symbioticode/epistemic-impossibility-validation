@@ -116,7 +116,7 @@ dashboard() {
 
   # ── THEORY ──────────────────────────────────────────────────────────────
   sec "📐 Theory (formalisation)"
-  local theory_files=("theorem71_formal.md" "belnap_tbm_isomorphism.md" "corollary_framework.md" "lemme_auditabilite.md")
+  local theory_files=("tie_formal.md" "belnap_tbm_isomorphism.md" "corollary_framework.md" "lemme_auditabilite.md")
   local theory_ok=0
   for f in "${theory_files[@]}"; do
     if [[ -s "theory/$f" ]]; then
@@ -404,7 +404,7 @@ generate_report() {
 |-----------|--------|
 | Fichiers core (9) | $(for f in STATUS.md VARIABLES.md CLAUDE.md requirements.txt init_project.sh README.md CHANGELOG.md QUICK_START.md REPO_STRUCTURE.md; do [[ -f "$f" ]] || echo "❌ $f"; done | grep -c "❌" | xargs -I{} echo "{} manquant(s)" || echo "✅ complets") |
 | Dossiers (8) | $(for d in theory src results figures tests paper brainstorm reviews; do [[ -d "$d" ]] || echo "❌"; done | grep -c "❌" | xargs -I{} echo "{} manquant(s)" || echo "✅ complets") |
-| Theory/*.md | $(for f in theorem71_formal.md belnap_tbm_isomorphism.md corollary_framework.md lemme_auditabilite.md; do [[ -s "theory/$f" ]] && echo "✅" || echo "❌ $f"; done | grep -c "✅")/4 non vides |
+| Theory/*.md | $(for f in tie_formal.md belnap_tbm_isomorphism.md corollary_framework.md lemme_auditabilite.md; do [[ -s "theory/$f" ]] && echo "✅" || echo "❌ $f"; done | grep -c "✅")/4 non vides |
 | src/*.py | $(for f in channels.py calibration.py experiment.py analysis.py experiment_corollaries.py experiment_hybrid.py; do [[ -s "src/$f" ]] && echo "✅" || echo "❌"; done | grep -c "✅")/6 non vides |
 | results/*.csv | $(for f in raw_results.csv conflict_results.csv learning_curves.csv rlhf_propagation.csv hybrid_comparison.csv source_correlation.csv; do [[ -f "results/$f" ]] && echo "✅" || echo "❌"; done | grep -c "✅")/6 présents |
 | brainstorm/BR-00*.md | $(for i in $(seq -w 1 10); do [[ -s "brainstorm/BR-0${i}.md" ]] && echo "✅" || echo "❌"; done | grep -c "✅")/10 non vides |

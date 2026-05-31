@@ -17,6 +17,61 @@
 
 ---
 
+## ⚠️ ADDENDUM — État Sprint 5 post-exécution (Mai 2026)
+*À lire avant toute chose. Modifie les instructions des Tâches 4.2 et 4.3.*
+
+### Ce qui a changé depuis la rédaction initiale de ce fichier
+
+**Sprint 5 a été exécuté. Deux livrables sont disponibles :**
+- `brainstorm/BR-007.md` — statut RÉSOLU, valeurs observées documentées
+- `reviews/REV-S5.md` — rapport Analyste avec diagnostic de circularité
+
+**Corollaire 1 (learning curves) — CONFIRMÉ, avec réserves de protocole :**
+- Figure 2 disponible. Canal texte plafonne vs canal latent. p < 1e-40.
+- Déviations de protocole à déclarer en Section 7 :
+  - N=10 runs au lieu de 50 → QO-S5-03
+  - 50 rounds au lieu de 200 → QO-S5-04
+- La p-value absorbe ces déviations — Corollaire 1 reste présentable en Section 6.
+
+**Corollaire 2 (propagation RLHF) — CIRCULAIRE PARTIELLE, résultat jacobien exploitable :**
+
+Lecture directe de `rlhf_propagation.csv` (branche sprint-5) :
+
+| κ | Signal round 0 | Signal round 1+ | jacobian_norm |
+|---|---|---|---|
+| 0.3 | ~1.3 (60% des runs) | 0.0 | ~0.073 constant |
+| 0.6 | ~1.3 (50% des runs) | 0.0 | ~0.042 constant |
+| 0.9 | 0.0 | 0.0 | **0.0** — graphe détaché dès l'init |
+
+- Pour κ=0.9 : `jacobian_norm = 0.0` dès round 0 — détachement total du graphe
+  confirmé. C'est le mécanisme encodé par détachement explicite (REV-S5 Q2).
+- Pour κ=0.3 et κ=0.6 : le signal s'effondre à 0 dès round 1 malgré un jacobien
+  non nul (~0.073 / ~0.042). Cause non résolue — bug de minimum local ou
+  effondrement de la tâche. Non interprétable comme validation de H11.
+- **Résultat exploitable** : la décroissance monotone du `jacobian_norm` avec κ
+  (0.073 → 0.042 → 0.0) est indépendante du signal RLHF et cohérente avec le TIE.
+  Ce résultat partiel est présentable en Section 7 comme observation préliminaire,
+  pas comme validation du Corollaire 2. Voir instruction Section 7 point 6.
+- `figures/figure3_rlhf_bound.pdf` — **NE PAS INTÉGRER** comme résultat principal.
+
+**Condition D (conflit injecté, `conflict_results.csv`) — VALIDE AVEC ANOMALIE :**
+
+Lecture directe de `conflict_results.csv` (branche main) :
+- Structure correcte, 1200+ lignes, toutes conditions présentes.
+- **Anomalie structurelle** : les valeurs de `jacobian_norm` sont identiques pour
+  un même `(entropy_level, run_idx)` quel que soit le `conflict_level`. Le conflit
+  injecté ne modifie pas le jacobien du canal C.
+- Deux lectures possibles : (a) comportement attendu — `inject_conflict()` modifie
+  la structure des masses m(∅) sans affecter le graphe de calcul du jacobien, ou
+  (b) bug — le conflit est appliqué après le calcul du jacobien.
+- La colonne `m_vide` confirme bien que m_vide = conflict_level à chaque ligne —
+  la manipulation des masses est fonctionnelle.
+- **Instruction pour Section 6.3** : présenter l'effet du conflit sur `m_vide` et
+  `output_entropy`, pas sur `jacobian_norm`. Déclarer explicitement l'absence d'effet
+  sur le jacobien et sa lecture (QO-S2-05 si non déjà ouvert).
+
+---
+
 ## Fichiers à lire avant de commencer (dans cet ordre)
 
 ```
@@ -32,11 +87,15 @@
 10. figures/table3_calibration.md   ← Table 3 calibration γ_i (Sprint 3)
 11. reviews/REV-S7.md               ← Rapport Analyste Sprint 7 + addendum clôture
 12. brainstorm/BR-010.md            ← Décision PI : Stratégie B adoptée, ζ+γ adopté
+13. brainstorm/BR-007.md            ← Sprint 5 résolu : Corollaire 1 confirmé, Corollaire 2 circulaire (QO-S5-02)
+14. reviews/REV-S5.md               ← Diagnostic circularité RLHF + déviations protocole
 ```
 
-**Ne pas lire :** les fichiers `src/`, les fichiers `results/conflict_results.csv`
-(réservé Section 6.3 — voir ci-dessous), les fichiers `brainstorm/` autres que BR-010,
-ni aucun fichier de session précédent.
+**Ne pas lire :** les fichiers `src/`, les fichiers `brainstorm/` autres que BR-010
+et BR-007, ni aucun fichier de session précédent.
+
+**Lire au moment de la Section 6.3 uniquement :** `results/conflict_results.csv`
+(branche main — 1200+ lignes). Voir instruction Section 6.3 ci-dessous.
 
 ---
 
@@ -153,12 +212,28 @@ et le rôle de l'orchestrateur comme traversée γ_i de la frontière latent/sym
 ### Section 6 — Validation expérimentale
 
 - **6.1** : Figure 1 déjà intégrée en Section 3.4 — renvoi.
-- **6.2** : Figure 2 (courbes d'apprentissage — Sprint 5, si disponible) ou placeholder
-  *[Figure 2 — Sprint 5 en cours]* si Sprint 5 non terminé.
+
+- **6.2** : Figure 2 (courbes d'apprentissage) — **disponible, intégrer**.
+  Lire `figures/figure2_learning_curves.pdf`.
+  Déclarer en note : N=10 runs (déviation R-STAT-02, QO-S5-03) et 50 rounds
+  (QO-S5-04). La p < 1e-40 maintient la conclusion malgré les déviations.
+
 - **6.3** : Résultats condition D — lire `results/conflict_results.csv`.
-  Décrire l'impact du niveau de conflit sur le jacobien du canal C.
-- **6.4** : Figure 4 (hybride — Sprint 6) — placeholder si non disponible.
-- **6.5** : Table corrélation cachée (Rule O3 — Sprint 6) — placeholder si non disponible.
+  L'effet du conflit porte sur `m_vide` (= conflict_level, confirmé) et
+  `output_entropy`, **pas sur `jacobian_norm`** (invariant quel que soit
+  conflict_level — voir anomalie documentée dans l'addendum).
+  Décrire : (a) l'augmentation de m(∅) avec conflict_level, (b) l'effet
+  sur output_entropy, (c) déclarer explicitement l'absence d'effet sur
+  jacobian_norm avec la lecture retenue (comportement attendu ou QO-S2-05).
+
+- **6.4** : Figure 4 (hybride — Sprint 6) — `[PLACEHOLDER — Sprint 6 en cours]`
+
+- **6.5** : Table corrélation cachée (Rule O3 — Sprint 6) — `[PLACEHOLDER — Sprint 6 en cours]`
+
+> ⚠️ **Figure 3 (RLHF) — NE PAS INTÉGRER.** La simulation du Corollaire 2
+> est circulaire (H11 encodée par détachement autograd, non testée empiriquement —
+> voir BR-007 QO-S5-02 et REV-S5 Q2). `figures/figure3_rlhf_bound.pdf` est
+> invalide. La sous-section RLHF est supprimée de Section 6.
 
 > **Règle des placeholders :** tout placeholder est marqué explicitement
 > `[PLACEHOLDER — Sprint N en cours]` avec le livrable attendu.
@@ -188,6 +263,30 @@ Déclarer **explicitement** (R-TRL-PAPER-01) :
 
 5. **Hypothèse γ (O métrique)** : déclarer les espaces de sortie non-métrisables
    comme hors du scope de la version actuelle du TIE.
+
+6. **Corollaire 2 (borne RLHF) — validation partielle uniquement** :
+   La simulation Sprint 5 a encodé la prédiction H11 via détachement explicite
+   du graphe autograd pour κ=0.9 (REV-S5 Q2, BR-007 QO-S5-02) — le test
+   multi-round est circulaire et non présentable.
+   **Résultat partiel exploitable** : la décroissance monotone du jacobien du
+   canal CLAIM avec κ (‖J‖ ≈ 0.073 pour κ=0.3, 0.042 pour κ=0.6, 0.0 pour
+   κ=0.9, N=10 runs) est cohérente avec le TIE et indépendante du mécanisme
+   de détachement. Présenter comme observation préliminaire, pas comme
+   validation du Corollaire 2. La validation complète requiert une architecture
+   où l'auditabilité est une propriété externe du canal — renvoi Section 8.
+
+7. **Déviations de protocole Sprint 5** : les courbes d'apprentissage (Figure 2)
+   ont été produites avec N=10 runs (QO-S5-03) et 50 rounds au lieu de 200
+   (QO-S5-04). La p < 1e-40 maintient la conclusion du Corollaire 1 malgré
+   ces déviations. La réplication à pleine échelle (N=50, 200 rounds) est
+   laissée aux travaux futurs.
+
+8. **Condition D — absence d'effet du conflit sur le jacobien** : dans
+   `conflict_results.csv`, `jacobian_norm` est invariant par rapport à
+   `conflict_level` pour un même `(entropy_level, run_idx)`. L'effet du
+   conflit injecté se manifeste uniquement sur m(∅) et `output_entropy`.
+   Déclarer cette limite de portée de la Condition D : l'injection de conflit
+   éistémique n'affecte pas le gradient du canal dans cette implémentation.
 
 ---
 
@@ -267,7 +366,7 @@ Conserver « Théorème 7.1 » uniquement dans les références formelles
 **Action 3 — Vérification finale :**
 ```bash
 grep -r "Théorème 7.1" paper/   # doit retourner 0 ou 1 occurrence (label formel)
-grep -r "theorem71_formal" .    # doit retourner 0 (tous renvois mis à jour)
+grep -r "tie_formal" .    # doit retourner 0 (tous renvois mis à jour)
 ```
 
 ---
@@ -282,7 +381,7 @@ reviews/REV-FINAL.md        ← Rapport Analyste — 7 questions
 
 **Commit Tâche 4.1–4.2 :** `[SPRINT-4] draft EIP_paper_v0.3 : sections 1-7`
 **Commit Tâche 4.3 :** `[SPRINT-4] add REV-FINAL : reviews/REV-FINAL.md`
-**Commit Tâche 4.4 :** `[SPRINT-4] rename theorem71_formal → tie_formal : R-DOC-01`
+**Commit Tâche 4.4 :** `[SPRINT-4] rename tie_formal → tie_formal : R-DOC-01`
 
 `STATUS.md` mis à jour : Sprint courant = 5, statut = PRÊT.
 
@@ -293,7 +392,7 @@ reviews/REV-FINAL.md        ← Rapport Analyste — 7 questions
 > **`paper/EIP_paper_v0.3.md` : sections 1–7 rédigées, placeholders marqués.**
 > **`reviews/REV-FINAL.md` : 7 questions GO ou GO conditionnel.**
 > **Score GNG-PAPER ≥ 75 global.**
-> **`git mv` theorem71_formal → tie_formal commité.**
+> **`git mv` tie_formal → tie_formal commité.**
 > **0 occurrence de "Théorème 7.1" non labelisée dans `paper/`.**
 
 **No-Go partiel :** si REV-FINAL Q3 (explications alternatives) retourne NO-GO,
@@ -321,12 +420,13 @@ Ne pas relancer l'expérience pour répondre à une objection rédactionnelle.
 ### 5.5 Terminologie Belnap flou [harmonisée avec belnap_tbm_isomorphism.md]
 ## 6. Validation expérimentale
 ### 6.1 Figure 1 — renvoi Section 3.4
-### 6.2 Figure 2 — [PLACEHOLDER Sprint 5]
-### 6.3 Condition D — conflit injecté (conflict_results.csv)
+### 6.2 Figure 2 — Courbes d'apprentissage (Corollaire 1, Sprint 5 ✅)
+### 6.3 Condition D — conflit injecté (conflict_results.csv ✅)
 ### 6.4 Figure 4 — [PLACEHOLDER Sprint 6]
 ### 6.5 Table Rule O3 — [PLACEHOLDER Sprint 6]
 ## 7. Limitations
 ## 8. Discussion et travaux futurs
+   [inclure §Corollaire 2 — prédiction théorique non testée empiriquement]
 ## Références
 ## Annexe A — Stratégie A (calculabilité) du Lemme
 ```
@@ -356,12 +456,12 @@ Ne pas relancer l'expérience pour répondre à une objection rédactionnelle.
 | `R-SEQ-01` | Sprint 4 débloqué — REV-S7 clos (Q1 GO, Q2 GO, Q3 levé par ζ+γ, addendum PI) |
 | `R-LEMME-03` | Lemme présenté comme résultat intermédiaire, pas contribution principale |
 | `R-TRL-PAPER-01` | Ne pas écrire de claim plus fort que ce que démontrent la preuve et les expériences |
-| `R-DOC-01` | Renommage theorem71_formal → tie_formal dans Tâche 4.4 |
+| `R-DOC-01` | Renommage tie_formal → tie_formal dans Tâche 4.4 |
 | `R-ICLR-01` | 9 pages max, double-blind, figures noir-et-blanc lisibles |
 | `R-PREUVE-02` | H1–H4 explicitement déclarées dans §3.3 — aucune hypothèse cachée |
-| `#1 Ground Truth or Silence` | Placeholders marqués explicitement — pas de sections vides silencieuses |
+| `#1 Ground Truth or Silence` | Placeholders marqués explicitement — figure3 invalide NON intégrée |
 | `#4 No Hidden State` | H4 (ζ) et modification γ (O métrique) déclarées et justifiées dans le papier |
-| `#18 Debt Visibility` | QO-V-06 (calibration γ_i) déclarée en Section 7 |
+| `#18 Debt Visibility` | QO-V-06, QO-S5-02, QO-S5-03, QO-S5-04, QO-S2-05 toutes déclarées en Section 7 |
 
 ---
 
