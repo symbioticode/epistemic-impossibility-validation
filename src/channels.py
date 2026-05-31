@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import Union
+from typing import Union, Protocol
 from transformers import GPT2Model, GPT2Tokenizer
 import math
 from dataclasses import dataclass
@@ -271,11 +271,6 @@ class LatentChannel:
             return entropy.item()
 
 
-from dataclasses import dataclass
-from typing import Literal, Dict, FrozenSet
-import torch
-
-
 @dataclass(frozen=True)
 class CLAIM:
     """
@@ -289,8 +284,6 @@ class CLAIM:
     freshness: tuple[float, float]                 # (t_obs, Δt_valid) — stub
     provenance: str                                # chain_id — stub
 
-
-from typing import Protocol
 
 class Channel(Protocol):
     """Interface commune à tous les canaux."""
