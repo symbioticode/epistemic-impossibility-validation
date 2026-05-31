@@ -22,6 +22,8 @@ from channels import TextChannel, LatentChannel, CLAIMChannel
 N_ROUNDS_COROL = 50
 N_ROUNDS_RLHF = 30
 N_RUNS = 10
+# High‑priority run count for Corollary 1 and 3 (task 4.1)
+N_RUNS_HIGH = 50
 N_CLASSES = 4
 SEED_GLOBAL = 42
 NIVEAUX_CONFIANCE = [0.3, 0.6, 0.9]
@@ -121,8 +123,17 @@ def run_learning_curve_experiment(
     n_runs: int = N_RUNS,
     n_classes: int = N_CLASSES,
     seed_global: int = SEED_GLOBAL,
-    output_path: str = "results/learning_curves.csv"
+    output_path: str = "results/learning_curves.csv",
+    *,
+    corollary_id: int = 0,
 ) -> pd.DataFrame:
+    """Run learning curve experiment with optional high‑priority run count.
+
+    If ``corollary_id`` is 1 or 3 (the corollaries targeted by task 4.1), the number of
+    runs is increased to ``N_RUNS_HIGH`` (50) to improve statistical power.
+    """
+    if corollary_id in {1, 3}:
+        n_runs = N_RUNS_HIGH
     results = []
     prototypes, true_label = generate_classification_task(n_classes, seed=seed_global)
 
@@ -186,8 +197,16 @@ def run_rlhf_experiment(
     n_rounds: int = N_ROUNDS_RLHF,
     n_runs: int = N_RUNS,
     seed_global: int = SEED_GLOBAL,
-    output_path: str = "results/rlhf_propagation.csv"
+    output_path: str = "results/rlhf_propagation.csv",
+    *,
+    corollary_id: int = 0,
 ) -> pd.DataFrame:
+    """Run RLHF propagation experiment with optional high‑priority run count.
+
+    For ``corollary_id`` 1 or 3, ``n_runs`` is overridden to ``N_RUNS_HIGH``.
+    """
+    if corollary_id in {1, 3}:
+        n_runs = N_RUNS_HIGH
     results = []
     for kappa in confidence_levels:
         print(f"  Simulation κ = {kappa}")
@@ -246,6 +265,95 @@ def run_rlhf_experiment(
     df.to_csv(output_path, index=False)
     return df
 
+
+# ---------------------------------------------------------------------------
+# CIFAR-10 classification experiment (Task 4.2)
+# ---------------------------------------------------------------------------
+
+def run_cifar10_classification_experiment(
+    channel: TextChannel,
+    epochs: int = 5,
+    batch_size: int = 64,
+    seed_global: int = SEED_GLOBAL,
+    output_path: str = "results/cifar10_experiment.csv",
+) -> pd.DataFrame:
+    """Simple CIFAR‑10 experiment using the provided ``channel``.
+
+    Images are encoded to the hidden dimension, passed through ``channel.encode``,
+    and a linear probe is trained to predict the 10 classes.  The function returns
+    a DataFrame with the final test accuracy.
+    """
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    from torchvision import datasets, transforms
+    from torch.utils.data import DataLoader
+
+    torch.manual_seed(seed_global)
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
+    train_set = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform)
+    test_set = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
+
+    class ImageEncoder(nn.Module):
+        def __init__(self, hidden_dim: int = HIDDEN_DIM):
+            super().__init__()
+            self.conv = nn.Sequential(
+                nn.Conv2d(3, 32, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+                nn.Conv2d(32, 64, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.AdaptiveAvgPool2d((1, 1)),
+            )
+            self.fc = nn.Linear(64, hidden_dim)
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = self.conv(x)
+            x = x.view(x.size(0), -1)
+            return self.fc(x)
+
+    encoder = ImageEncoder().eval()
+    for p in encoder.parameters():
+        p.requires_grad = False
+
+    probe = nn.Linear(HIDDEN_DIM, 10)
+    optimizer = optim.Adam(probe.parameters(), lr=1e-3)
+    criterion = nn.CrossEntropyLoss()
+
+    for epoch in range(epochs):
+        probe.train()
+        for imgs, labels in train_loader:
+            with torch.no_grad():
+                latent = encoder(imgs)
+                channel_out = channel.encode(latent)
+            optimizer.zero_grad()
+            logits = probe(channel_out)
+            loss = criterion(logits, labels)
+            loss.backward()
+            optimizer.step()
+
+    # Evaluation
+    probe.eval()
+    correct = total = 0
+    with torch.no_grad():
+        for imgs, labels in test_loader:
+            latent = encoder(imgs)
+            channel_out = channel.encode(latent)
+            logits = probe(channel_out)
+            preds = logits.argmax(dim=1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+    accuracy = correct / total
+    df = pd.DataFrame([{"seed": seed_global, "accuracy": accuracy}])
+    _os.makedirs(_os.path.dirname(output_path), exist_ok=True)
+    df.to_csv(output_path, index=False)
+    print(f"✅ CIFAR‑10 experiment completed – accuracy={accuracy:.4f} → {output_path}")
+    return df
 
 def plot_figure3(df: pd.DataFrame, output_path: str = "figures/figure3_rlhf_bound.pdf") -> None:
     fig, ax = plt.subplots(figsize=(6, 4))

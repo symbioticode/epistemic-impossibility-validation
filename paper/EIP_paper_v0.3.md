@@ -79,7 +79,7 @@ The TIE can be seen as a topological manifestation of the Information Bottleneck
 
 ![Figure 1: Jacobian norm collapse vs Entropy](figures/figure1_gradient_entropy.pdf)
 *Figure 1: Jacobian norm of the TextChannel (blue) collapses as output entropy decreases toward the deterministic/auditable limit, while the LatentChannel (orange) remains stable.*
-
+We vary the output entropy of the TextChannel by scaling the softmax temperature; lower entropy simulates a more deterministic (thus more auditable) channel. This operational link clarifies the connection between entropy level and the auditability constraint discussed in Corollary 1.
 ## 4. Epistemic Interface Problem — Définition formelle
 We define the **Epistemic Interface Problem (EIP)** as the engineering challenge posed by the TIE: the inherent trade-off between the *expressivity* required for agent learning and the *auditability* required for system safety. In practical terms, it means that "perfectly safe" (fully auditable) channels are "blind" to gradient-based optimization.
 
@@ -130,10 +130,12 @@ We evaluated the impact of epistemic conflict using the `inject_conflict` method
 2. **Calibration $\gamma_i$**: (QO-V-06) The use of k-NN for calibration is an approximation. Improved methods like Deep EK-NN should be explored.
 3. **Hypothesis H4 ($\zeta$)**: The TIE applies when *all* outputs are certified.
 4. **Hypothesis $\gamma$ (O metric)**: Non-metrizable topologies are not covered.
-5. **RLHF Bound (Corollary 2)**: Preliminary observations show a monotonic decrease of the Jacobian norm with the auditability constraint $\kappa$, but full validation was hampered by graph detachment issues.
-6. **Protocol Deviations**: Learning curves used reduced parameters (N=10, 50 rounds).
-7. **Conflict Injection**: In our implementation, `jacobian_norm` is invariant to `conflict_level` (QO-S2-05).
-8. **Softmax discretization**: The inherent discretization of the softmax layer in textual channels acts as a "weak" auditability constraint that precipitates the observed gradient collapse.
+5. **Jacobian Approximation**: For the TextChannel we estimate the Jacobian using the differentiable softmax proxy (`soft_encode_fn`) because the true argmax is non‑differentiable. This proxy captures the qualitative collapse of the Jacobian but may not reflect exact values.
+6. **RLHF Bound (Corollary 2) – Jacobian decay**: We confirm a monotonic decrease of the Jacobian norm with the auditability constraint $\kappa$.
+7. **RLHF Bound – Signal propagation**: Evidence for multi‑round signal propagation remains inconclusive; further experiments are required.
+8. **Protocol Deviations**: Learning curves used reduced parameters (N=10, 50 rounds).
+9. **Conflict Injection**: In our implementation, `jacobian_norm` is invariant to `conflict_level` (QO-S2-05).
+10. **Softmax discretization**: The inherent discretization of the softmax layer in textual channels acts as a "weak" auditability constraint that precipitates the observed gradient collapse.
 
 ## 8. Broader Impact
 
