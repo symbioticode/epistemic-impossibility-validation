@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from typing import Literal, Dict, FrozenSet
 
 
+N_ROUNDS_COROL = 50  # Default number of rounds for corollary experiments
+
+
 def _spectral_norm_power(fn, h: torch.Tensor, n_vecs: int = 5) -> float:
     """
     Estime la norme spectrale ‖J_fn(h)‖₂ via power iteration.
@@ -698,21 +701,13 @@ class CLAIMChannel:
         freshness = (0.0, 1.0)  # (t_obs, Δt_valid)
         provenance = "chain_0"  # chain_id
 
-        return CLAIM(
-            proposition=proposition,
-            belief_mass=belief_mass,
-            belnap_state=belnap_state,
-        illocution = "OBSERVE"
-        
-        # Stubs for freshness and provenance
-        freshness = (0.0, 1.0)  # (t_obs, Δt_valid)
-        provenance = "chain_0"  # chain_id
-        
+        # Removed duplicate incomplete block
+        # Corrected return statement for CLAIM construction
         return CLAIM(
             proposition=proposition,
             belief_mass=belief_mass,
             belnap_state=belnap_state,
             illocution=illocution,
             freshness=freshness,
-            provenance=provenance
+            provenance=provenance,
         )

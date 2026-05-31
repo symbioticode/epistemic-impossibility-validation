@@ -261,27 +261,6 @@ def detect_plateau(accuracy_series: np.ndarray, window: int = 5, threshold_delta
 
 
 def test_corollary_1(df_learning: pd.DataFrame) -> dict:
-=======
->>>>>>> 98eff60 (resolve stash merge conflicts)
-    """
-    Génère Figure 1 à partir de raw_results.csv.
-<<<<<<< Updated upstream
-=======
-
-    Contraintes :
-    - Format PDF vectoriel (plt.savefig(..., format='pdf', bbox_inches='tight'))
-    - DPI ≥ 300 (même pour PDF — préserve la qualité des polices)
-    - Police : serif ou sans-serif standard (pas de LaTeX requis)
-    - Taille de figure : (6, 4) pouces (format ICLR double-colonne)
-    - 3 couleurs distinctes daltonien-compatibles :
-        Canal A (texte)  : '#1f77b4' (bleu)
-        Canal B (latent) : '#2ca02c' (vert)
-        Canal C (CLAIM)  : '#d62728' (rouge)
-    - Marqueurs distincts : 'o', 's', '^' pour A, B, C
-    - Barres d'erreur : alpha=0.3, capsize=4
-
-    Contrat : la figure est lisible en noir et blanc (R-TRL-PAPER-01).
-    Contrat : les valeurs numériques dans la figure sont cohérentes avec
                les valeurs dans table1_main_results.md (vérification manuelle
                obligatoire avant commit).
     """
