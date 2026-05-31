@@ -18,12 +18,11 @@ class TextChannel:
     def __init__(self, model_name: str = "gpt2", seed: int = 42):
         """
         model_name : identifiant HuggingFace (défaut : "gpt2")
-        seed       : seed global pour reproductibilité
+        seed       : seed pour reproductibilité
         Postcondition : self.model est en mode eval(), grad désactivé.
         """
-        # Set seed for reproducibility
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+        self.seed = seed
+        self.generator = torch.Generator().manual_seed(seed)
         
         # Load tokenizer and model
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
@@ -74,17 +73,25 @@ class TextChannel:
         Retourne ‖J_C(h)‖₂ — norme spectrale du jacobien de encode() en h.
         Utilisé pour la mesure expérimentale (sprints suivants).
         Contrat : résultat ≥ 0, sans exception.
+
+        Note: Pour le canal texte, encode() est discret (argmax).
+        On utilise une approximation différentiable (weighted sum of embeddings)
+        pour calculer un jacobien significatif représentatif du canal.
         """
         # Enable gradients for h to compute Jacobian
         h_clone = h.clone().detach().requires_grad_(True)
         
-        # Define the function for which we want the Jacobian
-        def encode_fn(x):
-            return self.encode(x)
+        # Define a differentiable version of encode for Jacobian calculation
+        def soft_encode_fn(x):
+            # Project to vocabulary space
+            logits = torch.matmul(x, self.model.wte.weight.T)
+            # Softmax to get probabilities
+            probs = torch.softmax(logits, dim=-1)
+            # Differentiable approximation: weighted sum of embeddings
+            return torch.matmul(probs, self.model.wte.weight)
         
         # Compute Jacobian using torch.autograd.functional.jacobian
-        # Note: This computes the Jacobian of encode_fn with respect to h_clone
-        jacobian = torch.autograd.functional.jacobian(encode_fn, h_clone, vectorize=True)
+        jacobian = torch.autograd.functional.jacobian(soft_encode_fn, h_clone, vectorize=True)
         
         # The Jacobian will have shape (batch, hidden_dim, batch, hidden_dim)
         # We need the spectral norm for each batch element and then take the max or average?
@@ -139,13 +146,11 @@ class LatentChannel:
     def __init__(self, hidden_dim: int = 768, seed: int = 42):
         """
         hidden_dim : dimension de l'espace latent (défaut : 768 pour GPT-2 small)
-        seed       : seed global
+        seed       : seed pour reproductibilité
         """
         self.hidden_dim = hidden_dim
-        
-        # Set seed for reproducibility
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+        self.seed = seed
+        self.generator = torch.Generator().manual_seed(seed)
         
         # Create a small MLP: 2 layers with GELU activation
         # Layer 1: hidden_dim -> hidden_dim//4
@@ -158,10 +163,17 @@ class LatentChannel:
         self._initialize_weights()
 
     def _initialize_weights(self):
-        """Initialize weights using Xavier initialization"""
-        torch.nn.init.xavier_uniform_(self.fc1.weight)
+        """Initialize weights using Xavier initialization with local generator"""
+        def xavier_uniform_local_(tensor, generator):
+            fan_in, fan_out = torch.nn.init._calculate_fan_in_and_fan_out(tensor)
+            std = math.sqrt(2.0 / (fan_in + fan_out))
+            a = math.sqrt(3.0) * std
+            with torch.no_grad():
+                return tensor.uniform_(-a, a, generator=generator)
+
+        xavier_uniform_local_(self.fc1.weight, self.generator)
         torch.nn.init.zeros_(self.fc1.bias)
-        torch.nn.init.xavier_uniform_(self.fc2.weight)
+        xavier_uniform_local_(self.fc2.weight, self.generator)
         torch.nn.init.zeros_(self.fc2.bias)
 
     def encode(self, h: torch.Tensor) -> torch.Tensor:
@@ -307,14 +319,12 @@ class CLAIMChannel:
         """
         theta : cadre de discernement Θ (liste de labels)
                 Défaut : ["ami", "ennemi", "neutre", "inconnu"]
-        seed  : seed global
+        seed  : seed pour reproductibilité
         """
         self.theta = theta
         self.powerset_size = 2 ** len(theta)  # Number of subsets of theta
-        
-        # Set seed for reproducibility
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+        self.seed = seed
+        self.generator = torch.Generator().manual_seed(seed)
         
         # Linear head: hidden_dim -> powerset_size
         # We'll need to know the hidden_dim, but we'll handle it dynamically
@@ -345,9 +355,14 @@ class CLAIMChannel:
         if self.linear is None or self.hidden_dim != hidden_dim:
             self.hidden_dim = hidden_dim
             self.linear = torch.nn.Linear(hidden_dim, self.powerset_size)
-            # Initialize weights
-            torch.nn.init.xavier_uniform_(self.linear.weight)
-            torch.nn.init.zeros_(self.linear.bias)
+
+            # Manual Xavier initialization with local generator
+            fan_in, fan_out = torch.nn.init._calculate_fan_in_and_fan_out(self.linear.weight)
+            std = math.sqrt(2.0 / (fan_in + fan_out))
+            a = math.sqrt(3.0) * std
+            with torch.no_grad():
+                self.linear.weight.uniform_(-a, a, generator=self.generator)
+                torch.nn.init.zeros_(self.linear.bias)
 
     def encode(self, h: torch.Tensor) -> CLAIM:
         """
